@@ -77,6 +77,13 @@ public partial class MainForm : Form
         lblTotalWords.Text = $"{totalWords:N0}";
     }
 
+    private void UpdateRecordingState()
+    {
+        startRecordingMenuItem.Enabled = !isRecording;
+        stopRecordingMenuItem.Enabled = isRecording;
+        // You can add more UI updates based on recording state
+    }
+
     private void StartRecording(object? sender, EventArgs e)
     {
         if (string.IsNullOrEmpty(settings.ApiKey))
@@ -89,43 +96,45 @@ public partial class MainForm : Form
         }
 
         isRecording = true;
-        startRecordingMenuItem.Enabled = false;
-        stopRecordingMenuItem.Enabled = true;
+        UpdateRecordingState();
         audioRecorder.StartRecording();
     }
 
     private void StopRecording(object? sender, EventArgs e)
     {
         isRecording = false;
-        startRecordingMenuItem.Enabled = true;
-        stopRecordingMenuItem.Enabled = false;
-        audioRecorder.StopRecording(audioFilePath =>
+        UpdateRecordingState();
+        audioRecorder.StopRecording(async audioFilePath =>
         {
-            // Process the audio file and update history
-            ProcessRecording(audioFilePath);
+            await ProcessRecording(audioFilePath);
         });
         UpdateWordCount();
     }
 
-    private async void ProcessRecording(string audioFilePath)
+    private async Task ProcessRecording(string audioFilePath)
     {
         try
         {
-            // Here you would add the code to send the audio to OpenAI's Whisper API
-            // and process the transcription
-            // Then update the history with the transcribed text
-            
-            // For now, let's just verify the file exists
-            if (File.Exists(audioFilePath))
+            // Add await for async operations
+            await Task.Run(() =>
             {
-                MessageBox.Show("Recording saved successfully!", "Success", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
+                if (File.Exists(audioFilePath))
+                {
+                    this.Invoke(() =>
+                    {
+                        MessageBox.Show("Recording saved successfully!", "Success", 
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    });
+                }
+            });
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error processing recording: {ex.Message}", "Error",
-                MessageBoxButtons.OK, MessageBoxIcon.Error);
+            this.Invoke(() =>
+            {
+                MessageBox.Show($"Error processing recording: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            });
         }
     }
 

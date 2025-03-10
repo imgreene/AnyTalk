@@ -45,6 +45,12 @@ public class SettingsManager
         SaveSettingsToFile();
     }
 
+    public void SaveHotkey(string hotkey)
+    {
+        settings.HotKey = hotkey;
+        SaveSettingsToFile();
+    }
+
     private Settings LoadSettingsFromFile()
     {
         try
