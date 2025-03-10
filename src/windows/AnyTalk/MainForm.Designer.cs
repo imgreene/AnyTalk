@@ -6,30 +6,6 @@ namespace AnyTalk
     {
         private System.ComponentModel.IContainer components = null;
 
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                if (components != null)
-                {
-                    components.Dispose();
-                }
-                if (_hotkeyManager != null)
-                {
-                    _hotkeyManager.Dispose();
-                }
-                if (_audioRecorder != null)
-                {
-                    _audioRecorder.Dispose();
-                }
-                if (notifyIcon != null)
-                {
-                    notifyIcon.Dispose();
-                }
-            }
-            base.Dispose(disposing);
-        }
-
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();

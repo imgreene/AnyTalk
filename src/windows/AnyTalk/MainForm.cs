@@ -189,4 +189,19 @@ public partial class MainForm : Form
         base.OnFormClosing(e);
         SaveSettings();
     }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            if (components != null)
+            {
+                components.Dispose();
+            }
+            _hotkeyManager?.Dispose();
+            _audioRecorder?.Dispose();
+            notifyIcon?.Dispose();
+        }
+        base.Dispose(disposing);
+    }
 }
