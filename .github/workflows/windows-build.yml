@@ -35,6 +35,12 @@ jobs:
       run: |
         mkdir -p output
         iscc setup.iss
+
+    - name: Upload Installer Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: AnyTalk-Windows-Setup
+        path: installer/windows/output/AnyTalk-Windows-Setup.exe
       
     - name: Upload Installer to Release
       if: github.event_name == 'release'
