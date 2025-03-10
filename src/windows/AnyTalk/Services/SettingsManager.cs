@@ -33,46 +33,32 @@ public class SettingsManager
 
     private T GetSetting<T>(string name, T defaultValue)
     {
-        using var key = Registry.CurrentUser.OpenSubKey(RegPath);
-        if (key == null) return defaultValue;
-        
+        using var key = Registry.CurrentUser.CreateSubKey(RegPath);
         var value = key.GetValue(name);
-        if (value == null) return defaultValue;
-        
-        return (T)Convert.ChangeType(value, typeof(T));
+        return value != null ? (T)Convert.ChangeType(value, typeof(T)) : defaultValue;
     }
 
-    private void SaveSetting<T>(string name, T? value)
+    private void SaveSetting<T>(string name, T value)
     {
         using var key = Registry.CurrentUser.CreateSubKey(RegPath);
-        if (key != null)
-        {
-            key.SetValue(name, value);
-        }
+        key.SetValue(name, value?.ToString() ?? string.Empty);
     }
 
     private void SetStartupRegistry(bool enable)
     {
-        using var key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
-        if (key != null)
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run");
+        if (enable)
         {
-            if (enable)
-            {
-                key.SetValue(AppName, Application.ExecutablePath);
-            }
-            else
-            {
-                key.DeleteValue(AppName, false);
-            }
+            var exePath = Application.ExecutablePath;
+            key.SetValue(AppName, exePath);
+        }
+        else
+        {
+            key.DeleteValue(AppName, false);
         }
     }
 
-    public void SetRegistryValue(string name, object? value)
-    {
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AnyTalk");
-        if (value != null)
-        {
-            key.SetValue(name, value);
-        }
-    }
+    // Compatibility methods for existing code
+    public string GetApiKey() => ApiKey;
+    public void SaveApiKey(string apiKey) => ApiKey = apiKey;
 }

@@ -2,6 +2,29 @@
 
 AnyTalk is a desktop application that provides voice-to-text dictation using OpenAI's Whisper API. It runs in the background and is accessible via a menubar icon (macOS) or system tray icon (Windows).
 
+## ⚠️ Important: OpenAI API Key Required
+AnyTalk requires your own OpenAI API key to function. You will be charged by OpenAI based on your usage:
+- You are responsible for any costs incurred through your OpenAI API key
+- Whisper API costs approximately $0.006 per minute of audio
+- You can monitor your usage on your [OpenAI usage dashboard](https://platform.openai.com/account/usage)
+
+### Cost Estimates for 100,000 Words
+Based on different speaking speeds:
+- At 100 words/minute: ~$6.00 (16.7 minutes)
+- At 120 words/minute: ~$5.00 (13.9 minutes)
+- At 150 words/minute: ~$4.00 (11.1 minutes)
+- At 200 words/minute: ~$3.00 (8.3 minutes)
+
+These estimates are approximate and actual costs may vary based on factors like pauses between words and API pricing changes. Visit [OpenAI's pricing page](https://openai.com/pricing) for current rates.
+
+### Cost Comparison
+While similar dictation services charge a flat fee of $15/month regardless of usage, AnyTalk only charges for what you use:
+- Light usage (5 minutes/month): ~$0.03
+- Moderate usage (30 minutes/month): ~$0.18
+- Heavy usage (2 hours/month): ~$0.72
+
+This pay-as-you-go model ensures you only pay for actual usage, potentially saving hundreds of dollars per year compared to subscription-based alternatives.
+
 If you find AnyTalk useful and it helps save you time and money, consider supporting its development:
 ```btc
 BTC: bc1qwjy57p4pq6n4qejrvq6yfjjq37unqen33ckakz
@@ -12,7 +35,7 @@ BTC: bc1qwjy57p4pq6n4qejrvq6yfjjq37unqen33ckakz
 - **Background Voice Dictation**: 
   - macOS: Press ⌘⌥ (Command+Option) to start dictating
   - Windows: Press Ctrl+Alt to start dictating
-- **High-Quality Transcription**: Uses OpenAI's Whisper API
+- **High-Quality Transcription**: Uses OpenAI's Whisper API (requires your API key)
 - **Multi-Language Support**: Transcribe in multiple languages
 - **Automatic Clipboard Copy**: Transcribed text is automatically copied
 - **History Management**: View and manage past transcriptions
@@ -24,11 +47,13 @@ BTC: bc1qwjy57p4pq6n4qejrvq6yfjjq37unqen33ckakz
 - macOS 11.0 (Big Sur) or later
 - Internet connection
 - Microphone access
+- OpenAI API key
 
 ### Windows
 - Windows 10 or later
 - Internet connection
 - Microphone access
+- OpenAI API key
 
 ## Download and Install
 
@@ -48,11 +73,17 @@ BTC: bc1qwjy57p4pq6n4qejrvq6yfjjq37unqen33ckakz
 
 ## First-Time Setup
 
-1. Get your OpenAI API key from https://platform.openai.com/account/api-keys
-2. Click the AnyTalk icon in the menubar (macOS) or system tray (Windows)
-3. Go to Settings
-4. Enter your OpenAI API key and click "Save"
-5. Grant microphone permissions when prompted
+1. **Get Your OpenAI API Key** (Required):
+   - Sign up at [OpenAI](https://platform.openai.com/signup)
+   - Go to [API Keys](https://platform.openai.com/account/api-keys)
+   - Create a new API key
+   - Keep your API key secure and never share it
+
+2. **Configure AnyTalk**:
+   - Click the AnyTalk icon in the menubar (macOS) or system tray (Windows)
+   - Go to Settings
+   - Enter your OpenAI API key and click "Save"
+   - Grant microphone permissions when prompted
 
 ## Usage
 
@@ -69,7 +100,7 @@ BTC: bc1qwjy57p4pq6n4qejrvq6yfjjq37unqen33ckakz
    - **Settings**: Customize the app's behavior
 
 3. **Settings Configuration**:
-   - **API Key**: Enter your OpenAI API key
+   - **API Key**: Enter your OpenAI API key (required)
    - **Hotkey**: Change the keyboard shortcut
    - **Microphone**: Select input device
    - **Language**: Choose transcription language
@@ -78,7 +109,7 @@ BTC: bc1qwjy57p4pq6n4qejrvq6yfjjq37unqen33ckakz
 ## Privacy
 
 - AnyTalk only records audio when you hold down the hotkey
-- Audio data is sent to OpenAI's servers for transcription
+- Audio data is sent to OpenAI's servers for transcription using your API key
 - All transcription history is stored locally on your device
 - No data is collected by the app developers
 

@@ -9,19 +9,19 @@ namespace AnyTalk;
 
 public partial class MainForm : Form
 {
-    private TabControl tabControl = null!;
-    private TabPage homeTab = null!;
-    private TabPage historyTab = null!;
-    private TabPage settingsTab = null!;
-    private Panel headerPanel = null!;
-    private Label titleLabel = null!;
-    private Label recordingLabel = null!;
+    private readonly TabControl tabControl = null!;
+    private readonly TabPage homeTab = null!;
+    private readonly TabPage historyTab = null!;
+    private readonly TabPage settingsTab = null!;
+    private readonly Panel headerPanel = null!;
+    private readonly Label titleLabel = null!;
+    private readonly Label recordingLabel = null!;
     private bool isRecording = false;
     private HotkeyManager? hotkeyManager;
-    private List<TranscriptionEntry> historyEntries = new();
-    private Label wordCountLabel = null!;
-    private TextBox apiKeyTextBox = null!;
-    private string historyFilePath = null!;
+    private readonly List<TranscriptionEntry> historyEntries = new();
+    private readonly Label wordCountLabel = null!;
+    private readonly TextBox apiKeyTextBox = null!;
+    private readonly string historyFilePath;
 
     public MainForm()
     {
@@ -205,6 +205,8 @@ public partial class MainForm : Form
 
     private void SaveSettings_Click(object sender, EventArgs e)
     {
+        if (apiKeyTextBox?.Text == null) return;
+        
         var settings = new SettingsManager();
         settings.SaveApiKey(apiKeyTextBox.Text);
         MessageBox.Show("Settings saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -246,7 +248,10 @@ public partial class MainForm : Form
 
     private void ApiKeyTextBox_TextChanged(object? sender, EventArgs e)
     {
-        SettingsManager.Instance.ApiKey = apiKeyTextBox.Text;
+        if (apiKeyTextBox?.Text != null)
+        {
+            SettingsManager.Instance.ApiKey = apiKeyTextBox.Text;
+        }
     }
 
     private void StartupCheckBox_CheckedChanged(object? sender, EventArgs e)
@@ -259,6 +264,8 @@ public partial class MainForm : Form
 
     private void UpdateHistoryList(ListView listView)
     {
+        if (listView == null) return;
+        
         listView.Items.Clear();
         foreach (var entry in historyEntries)
         {
