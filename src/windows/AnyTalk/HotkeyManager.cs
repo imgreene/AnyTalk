@@ -59,6 +59,7 @@ public class HotkeyManager
         if (m.Msg == WM_HOTKEY)
         {
             int id = m.WParam.ToInt32();
+            
             if (id == HOTKEY_ID_DOWN)
             {
                 _onHotkeyDown?.Invoke();

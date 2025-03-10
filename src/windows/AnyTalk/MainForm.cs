@@ -1,6 +1,9 @@
 using AnyTalk.Models;
 using AnyTalk.Services;
 using System.Text.Json;
+using NAudio.Wave;
+using NAudio.CoreAudioApi;
+using System.Diagnostics;
 
 namespace AnyTalk;
 
@@ -100,43 +103,7 @@ public partial class MainForm : Form
 
         // Settings Tab
         TabPage settingsTab = new TabPage("Settings");
-        TableLayoutPanel settingsLayout = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            Padding = new Padding(10),
-            RowCount = 4,
-            ColumnCount = 2
-        };
-
-        // API Key
-        settingsLayout.Controls.Add(new Label { Text = "API Key:" }, 0, 0);
-        apiKeyTextBox = new TextBox 
-        { 
-            Width = 200,
-            Text = SettingsManager.Instance.ApiKey
-        };
-        apiKeyTextBox.TextChanged += ApiKeyTextBox_TextChanged;
-        settingsLayout.Controls.Add(apiKeyTextBox, 1, 0);
-
-        // Hotkey
-        settingsLayout.Controls.Add(new Label { Text = "Hotkey:" }, 0, 1);
-        settingsLayout.Controls.Add(new TextBox 
-        { 
-            Width = 200, 
-            Text = "Ctrl+Alt", 
-            ReadOnly = true 
-        }, 1, 1);
-
-        // Launch at startup
-        settingsLayout.Controls.Add(new Label { Text = "Launch at startup:" }, 0, 2);
-        CheckBox startupCheckBox = new CheckBox
-        {
-            Checked = SettingsManager.Instance.LaunchAtStartup
-        };
-        startupCheckBox.CheckedChanged += StartupCheckBox_CheckedChanged;
-        settingsLayout.Controls.Add(startupCheckBox, 1, 2);
-
-        settingsTab.Controls.Add(settingsLayout);
+        InitializeSettingsTab();
 
         // Add tabs
         tabControl.TabPages.Add(homeTab);
@@ -146,6 +113,106 @@ public partial class MainForm : Form
         // Add controls to form
         this.Controls.Add(headerPanel);
         this.Controls.Add(tabControl);
+    }
+
+    private void InitializeSettingsTab()
+    {
+        TableLayoutPanel settingsLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 5,
+            Padding = new Padding(20),
+            ColumnStyles = {
+                new ColumnStyle(SizeType.AutoSize),
+                new ColumnStyle(SizeType.Percent, 100)
+            }
+        };
+
+        // Hotkey
+        settingsLayout.Controls.Add(new Label { Text = "Hotkey:" }, 0, 0);
+        settingsLayout.Controls.Add(new TextBox 
+        { 
+            Width = 200, 
+            Text = "Ctrl+Alt", 
+            ReadOnly = true 
+        }, 1, 0);
+
+        // Microphone Selection
+        settingsLayout.Controls.Add(new Label { Text = "Microphone:" }, 0, 1);
+        ComboBox microphoneCombo = new ComboBox
+        {
+            Width = 200,
+            DropDownStyle = ComboBoxStyle.DropDownList
+        };
+        PopulateMicrophoneList(microphoneCombo);
+        settingsLayout.Controls.Add(microphoneCombo, 1, 1);
+
+        // API Key
+        settingsLayout.Controls.Add(new Label { Text = "OpenAI API Key:" }, 0, 2);
+        TextBox apiKeyBox = new TextBox
+        {
+            Width = 200,
+            PasswordChar = '•',
+            Text = SettingsManager.Instance.ApiKey
+        };
+        apiKeyBox.TextChanged += (s, e) => SettingsManager.Instance.ApiKey = apiKeyBox.Text;
+        settingsLayout.Controls.Add(apiKeyBox, 1, 2);
+
+        // Language Selection
+        settingsLayout.Controls.Add(new Label { Text = "Language:" }, 0, 3);
+        ComboBox languageCombo = new ComboBox
+        {
+            Width = 200,
+            DropDownStyle = ComboBoxStyle.DropDownList
+        };
+        PopulateLanguageList(languageCombo);
+        settingsLayout.Controls.Add(languageCombo, 1, 3);
+
+        // Launch at startup
+        settingsLayout.Controls.Add(new Label { Text = "Launch at startup:" }, 0, 4);
+        CheckBox startupCheckBox = new CheckBox
+        {
+            Checked = SettingsManager.Instance.LaunchAtStartup
+        };
+        startupCheckBox.CheckedChanged += StartupCheckBox_CheckedChanged;
+        settingsLayout.Controls.Add(startupCheckBox, 1, 4);
+
+        settingsTab.Controls.Add(settingsLayout);
+    }
+
+    private void PopulateMicrophoneList(ComboBox combo)
+    {
+        combo.Items.Add("Default Device");
+        foreach (string device in AudioRecorder.GetAvailableMicrophones())
+        {
+            combo.Items.Add(device);
+        }
+        combo.SelectedIndex = 0;
+    }
+
+    private void PopulateLanguageList(ComboBox combo)
+    {
+        var languages = new Dictionary<string, string>
+        {
+            {"en", "English"},
+            {"es", "Spanish"},
+            {"fr", "French"},
+            {"de", "German"},
+            {"it", "Italian"},
+            {"pt", "Portuguese"},
+            {"nl", "Dutch"},
+            {"ru", "Russian"},
+            {"ja", "Japanese"},
+            {"ko", "Korean"},
+            {"zh", "Chinese"}
+        };
+
+        foreach (var lang in languages)
+        {
+            combo.Items.Add(lang.Value);
+        }
+        combo.SelectedIndex = 0;
     }
 
     private void ApiKeyTextBox_TextChanged(object? sender, EventArgs e)
@@ -309,5 +376,46 @@ public partial class MainForm : Form
             hotkeyManager.Cleanup();
         }
         base.OnFormClosing(e);
+    }
+
+    private void RequestMicrophonePermission()
+    {
+        try
+        {
+            using (var audioClient = new MMDeviceEnumerator())
+            {
+                var devices = audioClient.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active);
+                if (devices.Count > 0)
+                {
+                    // This will trigger the Windows permission prompt if not already granted
+                    using (var capture = new WasapiCapture(devices[0]))
+                    {
+                        capture.Initialize();
+                    }
+                }
+            }
+        }
+        catch (UnauthorizedAccessException)
+        {
+            MessageBox.Show(
+                "Microphone access is required for AnyTalk to work. Please enable it in Windows Settings > Privacy > Microphone.",
+                "Microphone Access Required",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning
+            );
+            
+            // Open Windows Settings to Microphone privacy settings
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "ms-settings:privacy-microphone",
+                UseShellExecute = true
+            });
+        }
+    }
+
+    protected override void OnLoad(EventArgs e)
+    {
+        base.OnLoad(e);
+        RequestMicrophonePermission();
     }
 }
