@@ -62,13 +62,15 @@ public partial class MainForm : Form
 
     private void LoadSettings()
     {
-        // Load and apply settings
         var settings = SettingsManager.Instance.LoadSettings();
-        if (string.IsNullOrEmpty(settings.ApiKey))
-        {
-            ShowMainWindow(this, EventArgs.Empty);
-            tabControl1.SelectedTab = tabSettings;
-        }
+        txtApiKey.Text = settings.ApiKey;
+        // Load other settings...
+    }
+
+    private void SaveSettings()
+    {
+        SettingsManager.Instance.SaveApiKey(txtApiKey.Text);
+        // Save other settings...
     }
 
     private void UpdateWordCount()
@@ -115,17 +117,24 @@ public partial class MainForm : Form
     {
         try
         {
-            // Add await for async operations
-            await Task.Run(() =>
+            // Here we'll simulate transcription for now
+            // In reality, you'd send this to Whisper API
+            string transcribedText = "This is a test transcription"; // Replace with actual API call
+
+            // Save to history
+            HistoryManager.Instance.AddEntry(transcribedText);
+
+            // Copy to clipboard
+            Clipboard.SetText(transcribedText);
+
+            // Simulate keyboard paste
+            SendKeys.SendWait("^v");
+
+            this.Invoke(() =>
             {
-                if (File.Exists(audioFilePath))
-                {
-                    this.Invoke(() =>
-                    {
-                        MessageBox.Show("Recording saved successfully!", "Success", 
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    });
-                }
+                UpdateWordCount();
+                MessageBox.Show("Transcription complete and pasted!", "Success", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
             });
         }
         catch (Exception ex)
@@ -153,14 +162,7 @@ public partial class MainForm : Form
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
-        if (e.CloseReason == CloseReason.UserClosing)
-        {
-            e.Cancel = true;
-            this.Hide();
-        }
-        else
-        {
-            base.OnFormClosing(e);
-        }
+        base.OnFormClosing(e);
+        SaveSettings();
     }
 }

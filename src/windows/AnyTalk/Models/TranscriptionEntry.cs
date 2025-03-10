@@ -1,21 +1,15 @@
+using System.Text.Json.Serialization;
+
 namespace AnyTalk.Models;
 
 public class TranscriptionEntry
 {
-    public string Text { get; set; }
+    [JsonPropertyName("text")]
+    public string Text { get; set; } = string.Empty;
+    
+    [JsonPropertyName("timestamp")]
     public DateTime Timestamp { get; set; }
-    public int WordCount => Text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length;
-
-    public TranscriptionEntry(string text)
-    {
-        Text = text;
-        Timestamp = DateTime.Now;
-    }
-
-    // Parameterless constructor for JSON deserialization
-    public TranscriptionEntry()
-    {
-        Text = string.Empty;
-        Timestamp = DateTime.Now;
-    }
+    
+    [JsonPropertyName("wordCount")]
+    public int WordCount { get; set; }
 }
