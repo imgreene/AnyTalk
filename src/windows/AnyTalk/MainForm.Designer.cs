@@ -5,26 +5,23 @@ namespace AnyTalk
     partial class MainForm
     {
         private System.ComponentModel.IContainer components = null;
-        private TabControl tabControl1;
-        private TabPage tabHome;
-        private TabPage tabHistory;
-        private TabPage tabSettings;
-        private Label lblTotalWords;
-        private Label lblTotalWordsLabel;
-        private ListView listHistory;
-        private TextBox txtApiKey;
-        private Button btnSaveApiKey;
-        private Button btnRecordHotkey;
-        private Label lblCurrentHotkey;
-        private CheckBox chkLaunchAtStartup;
-        private ComboBox cboLanguage;
-        private Label lblLanguage;
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
+            if (disposing)
             {
-                components.Dispose();
+                if (components != null)
+                {
+                    components.Dispose();
+                }
+                if (_hotkeyManager != null)
+                {
+                    _hotkeyManager.Dispose();
+                }
+                if (_audioRecorder != null)
+                {
+                    _audioRecorder.Dispose();
+                }
             }
             base.Dispose(disposing);
         }
