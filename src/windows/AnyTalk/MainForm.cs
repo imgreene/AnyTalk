@@ -15,6 +15,8 @@ public partial class MainForm : Form
     private readonly AudioRecorder audioRecorder;
     private readonly Settings settings;
     private bool isRecording;
+    private readonly HotkeyManager _hotkeyManager;
+    private bool _isRecording = false;
 
     public MainForm()
     {
@@ -56,8 +58,27 @@ public partial class MainForm : Form
         exitMenuItem.Click += Exit;
         notifyIcon.DoubleClick += ShowMainWindow;
 
-        // Update word count
+        // Subscribe to word count changes
+        HistoryManager.Instance.WordCountChanged += (s, e) => UpdateWordCount();
+        
+        // Initial word count update
         UpdateWordCount();
+
+        _hotkeyManager = new HotkeyManager(
+            this.Handle,
+            onHotkeyDown: () => {
+                if (!_isRecording)
+                {
+                    BeginInvoke(StartRecording);
+                }
+            },
+            onHotkeyUp: () => {
+                if (_isRecording)
+                {
+                    BeginInvoke(StopRecording);
+                }
+            }
+        );
     }
 
     private void LoadSettings()
@@ -76,7 +97,7 @@ public partial class MainForm : Form
     private void UpdateWordCount()
     {
         var totalWords = HistoryManager.Instance.GetTotalWordCount();
-        lblTotalWords.Text = $"{totalWords:N0}";
+        this.Invoke(() => lblTotalWords.Text = $"{totalWords:N0}");
     }
 
     private void UpdateRecordingState()
@@ -86,31 +107,44 @@ public partial class MainForm : Form
         // You can add more UI updates based on recording state
     }
 
-    private void StartRecording(object? sender, EventArgs e)
+    private void StartRecording()
     {
-        if (string.IsNullOrEmpty(settings.ApiKey))
+        if (string.IsNullOrEmpty(SettingsManager.Instance.ApiKey))
         {
-            MessageBox.Show("Please enter your OpenAI API key in Settings first.", "API Key Required",
-                MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            ShowMainWindow(this, EventArgs.Empty);
-            tabControl1.SelectedTab = tabSettings;
+            MessageBox.Show("Please enter your OpenAI API key in Settings first.", 
+                "API Key Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            ShowSettingsTab();
             return;
         }
 
-        isRecording = true;
+        _isRecording = true;
         UpdateRecordingState();
-        audioRecorder.StartRecording();
+        _audioRecorder.StartRecording();
+        
+        // Show recording indicator
+        notifyIcon.Icon = Properties.Resources.RecordingIcon; // Make sure to create this icon
+        notifyIcon.Text = "AnyTalk (Recording...)";
     }
 
-    private void StopRecording(object? sender, EventArgs e)
+    private async void StopRecording()
     {
-        isRecording = false;
+        if (!_isRecording)
+        {
+            return;
+        }
+
+        _isRecording = false;
         UpdateRecordingState();
-        audioRecorder.StopRecording(async audioFilePath =>
+        
+        // Reset icon
+        notifyIcon.Icon = Properties.Resources.DefaultIcon;
+        notifyIcon.Text = "AnyTalk";
+
+        var audioFilePath = _audioRecorder.StopRecording();
+        if (!string.IsNullOrEmpty(audioFilePath))
         {
             await ProcessRecording(audioFilePath);
-        });
-        UpdateWordCount();
+        }
     }
 
     private async Task ProcessRecording(string audioFilePath)
@@ -144,7 +178,7 @@ public partial class MainForm : Form
                 return;
             }
 
-            // Save to history
+            // Save to history - this will also trigger word count update
             HistoryManager.Instance.AddEntry(transcribedText);
 
             // Copy to clipboard and paste
@@ -188,5 +222,15 @@ public partial class MainForm : Form
     {
         base.OnFormClosing(e);
         SaveSettings();
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _hotkeyManager?.Dispose();
+            components?.Dispose();
+        }
+        base.Dispose(disposing);
     }
 }

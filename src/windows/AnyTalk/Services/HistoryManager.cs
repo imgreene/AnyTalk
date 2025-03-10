@@ -20,11 +20,11 @@ public class HistoryManager
 
     private HistoryManager()
     {
-        string appDataPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        var appDataPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "AnyTalk"
         );
-
+        
         if (!Directory.Exists(appDataPath))
         {
             Directory.CreateDirectory(appDataPath);
@@ -43,9 +43,14 @@ public class HistoryManager
             WordCount = text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length
         };
 
-        entries.Insert(0, entry);
+        entries.Insert(0, entry); // Add to beginning of list
         SaveHistoryToFile();
+        
+        // Notify any listeners (like MainForm) that the word count has changed
+        WordCountChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    public event EventHandler? WordCountChanged;
 
     public List<TranscriptionEntry> GetEntries()
     {
@@ -103,4 +108,11 @@ public class HistoryManager
             );
         }
     }
+}
+
+public class TranscriptionEntry
+{
+    public string Text { get; set; } = string.Empty;
+    public DateTime Timestamp { get; set; }
+    public int WordCount { get; set; }
 }
