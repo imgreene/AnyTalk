@@ -1,4 +1,4 @@
-# AnyTalk v1.0.0
+# AnyTalk v1.0.1
 
 ## Download and Install
 
