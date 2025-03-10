@@ -16,25 +16,47 @@ public partial class MainForm : Form
     private readonly Panel headerPanel;
     private readonly Label titleLabel;
     private readonly Label recordingLabel;
-    private bool isRecording = false;
-    private HotkeyManager? hotkeyManager;
-    private readonly List<TranscriptionEntry> historyEntries = new();
     private readonly Label wordCountLabel;
     private readonly TextBox apiKeyTextBox;
     private readonly string historyFilePath;
+    private bool isRecording = false;
+    private HotkeyManager? hotkeyManager;
+    private readonly List<TranscriptionEntry> historyEntries = new();
 
     public MainForm()
     {
-        // Initialize readonly fields in constructor
-        tabControl = new TabControl();
+        // Initialize all readonly fields in constructor
+        tabControl = new TabControl
+        {
+            Dock = DockStyle.Fill
+        };
+
         homeTab = new TabPage("Home");
         historyTab = new TabPage("History");
         settingsTab = new TabPage("Settings");
+        
         headerPanel = new Panel();
         titleLabel = new Label();
-        recordingLabel = new Label();
-        wordCountLabel = new Label();
-        apiKeyTextBox = new TextBox();
+        recordingLabel = new Label
+        {
+            Text = "Press Ctrl+Alt to start dictating",
+            AutoSize = true,
+            Location = new Point(20, 50)
+        };
+        
+        wordCountLabel = new Label
+        {
+            Text = "Total Words Dictated: 0",
+            AutoSize = true,
+            Location = new Point(20, 20)
+        };
+        
+        apiKeyTextBox = new TextBox
+        {
+            Width = 300,
+            PasswordChar = '•'
+        };
+        
         historyFilePath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "AnyTalk",
@@ -50,40 +72,22 @@ public partial class MainForm : Form
     private void InitializeComponent()
     {
         // Form settings
-        this.Text = "AnyTalk";
-        this.Size = new Size(400, 500);
-        this.MinimumSize = new Size(320, 400);
-        this.FormBorderStyle = FormBorderStyle.FixedSingle;
-        this.MaximizeBox = false;
-        this.StartPosition = FormStartPosition.CenterScreen;
+        Text = "AnyTalk";
+        Size = new Size(400, 500);
+        MinimumSize = new Size(320, 400);
+        FormBorderStyle = FormBorderStyle.FixedSingle;
+        MaximizeBox = false;
+        StartPosition = FormStartPosition.CenterScreen;
 
-        // Configure the initialized components
-        headerPanel.Dock = DockStyle.Top;
-        headerPanel.Height = 40;
-        headerPanel.BackColor = SystemColors.Control;
-
-        titleLabel.Text = "AnyTalk";
-        titleLabel.Font = new Font("Segoe UI", 12, FontStyle.Bold);
-        titleLabel.Location = new Point(10, 10);
-        titleLabel.AutoSize = true;
-
-        recordingLabel.Text = "Recording";
-        recordingLabel.ForeColor = Color.Orange;
-        recordingLabel.Visible = false;
-        recordingLabel.Location = new Point(headerPanel.Width - 80, 10);
-        recordingLabel.AutoSize = true;
-
-        // Add controls
-        headerPanel.Controls.Add(titleLabel);
-        headerPanel.Controls.Add(recordingLabel);
-        
-        tabControl.Dock = DockStyle.Fill;
         tabControl.TabPages.Add(homeTab);
         tabControl.TabPages.Add(historyTab);
         tabControl.TabPages.Add(settingsTab);
 
-        this.Controls.Add(headerPanel);
-        this.Controls.Add(tabControl);
+        Controls.Add(tabControl);
+        
+        InitializeHomeTab();
+        InitializeHistoryTab();
+        InitializeSettingsTab();
     }
 
     private void InitializeTabs()
@@ -178,9 +182,9 @@ public partial class MainForm : Form
         apiKeyTextBox.Text = settings.GetApiKey();
     }
 
-    private void SaveSettings_Click(object sender, EventArgs e)
+    private void SaveSettings_Click(object? sender, EventArgs e)
     {
-        if (apiKeyTextBox?.Text == null) return;
+        if (apiKeyTextBox.Text == null) return;
         
         var settings = new SettingsManager();
         settings.SaveApiKey(apiKeyTextBox.Text);
