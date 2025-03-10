@@ -1,9 +1,6 @@
 using AnyTalk.Models;
 using AnyTalk.Services;
 using System.Text.Json;
-using NAudio.Wave;
-using NAudio.CoreAudioApi;
-using System.Diagnostics;
 
 namespace AnyTalk;
 
@@ -22,8 +19,9 @@ public partial class MainForm : Form
     public MainForm()
     {
         InitializeComponent();
+        LoadSettings();
 
-        // Initialize all readonly fields in the constructor
+        // Initialize all readonly fields
         notifyIcon = new NotifyIcon
         {
             Icon = new Icon("Resources/AppIcon.ico"),
@@ -49,25 +47,44 @@ public partial class MainForm : Form
 
         // Initialize audio recorder and settings
         audioRecorder = new AudioRecorder();
-        settings = new Settings();
+        settings = SettingsManager.Instance.LoadSettings();
 
         // Wire up event handlers
         startRecordingMenuItem.Click += StartRecording;
         stopRecordingMenuItem.Click += StopRecording;
-        settingsMenuItem.Click += ShowSettings;
+        settingsMenuItem.Click += ShowMainWindow;
         exitMenuItem.Click += Exit;
+        notifyIcon.DoubleClick += ShowMainWindow;
 
-        // Set up form properties
-        this.WindowState = FormWindowState.Minimized;
-        this.ShowInTaskbar = false;
+        // Update word count
+        UpdateWordCount();
+    }
+
+    private void LoadSettings()
+    {
+        // Load and apply settings
+        var settings = SettingsManager.Instance.LoadSettings();
+        if (string.IsNullOrEmpty(settings.ApiKey))
+        {
+            ShowMainWindow(this, EventArgs.Empty);
+            tabControl1.SelectedTab = tabSettings;
+        }
+    }
+
+    private void UpdateWordCount()
+    {
+        var totalWords = HistoryManager.Instance.GetTotalWordCount();
+        lblTotalWords.Text = $"{totalWords:N0}";
     }
 
     private void StartRecording(object? sender, EventArgs e)
     {
-        if (settings.ApiKey == null || settings.ApiKey.Trim().Length == 0)
+        if (string.IsNullOrEmpty(settings.ApiKey))
         {
             MessageBox.Show("Please enter your OpenAI API key in Settings first.", "API Key Required",
                 MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            ShowMainWindow(this, EventArgs.Empty);
+            tabControl1.SelectedTab = tabSettings;
             return;
         }
 
@@ -83,22 +100,18 @@ public partial class MainForm : Form
         startRecordingMenuItem.Enabled = true;
         stopRecordingMenuItem.Enabled = false;
         audioRecorder.StopRecording();
+        UpdateWordCount();
     }
 
-    private void ShowSettings(object? sender, EventArgs e)
+    private void ShowMainWindow(object? sender, EventArgs e)
     {
-        using (var settingsForm = new SettingsForm(settings))
-        {
-            settingsForm.ShowDialog();
-        }
+        this.Show();
+        this.WindowState = FormWindowState.Normal;
+        this.Activate();
     }
 
     private void Exit(object? sender, EventArgs e)
     {
-        if (isRecording)
-        {
-            audioRecorder.StopRecording();
-        }
         notifyIcon.Visible = false;
         Application.Exit();
     }
@@ -108,7 +121,6 @@ public partial class MainForm : Form
         if (e.CloseReason == CloseReason.UserClosing)
         {
             e.Cancel = true;
-            this.WindowState = FormWindowState.Minimized;
             this.Hide();
         }
         else
