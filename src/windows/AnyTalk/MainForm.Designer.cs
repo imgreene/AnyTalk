@@ -6,6 +6,24 @@ namespace AnyTalk
     {
         private System.ComponentModel.IContainer components = null;
 
+        private TabControl tabControl1;
+        private TabPage tabHome;
+        private TabPage tabHistory;
+        private TabPage tabSettings;
+        private Label lblTotalWordsLabel;
+        private Label lblTotalWords;
+        private ListView listHistory;
+        private TableLayoutPanel settingsPanel;
+        private Label apiKeyLabel;
+        private TextBox txtApiKey;
+        private Button btnSaveApiKey;
+        private Label hotkeyLabel;
+        private Label lblCurrentHotkey;
+        private Button btnRecordHotkey;
+        private Label lblLanguage;
+        private ComboBox cboLanguage;
+        private CheckBox chkLaunchAtStartup;
+
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
@@ -167,6 +185,15 @@ namespace AnyTalk
                     SettingsManager.Instance.SaveHotkey(hotkeyForm.HotkeyString);
                 }
             }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
         }
     }
 }
