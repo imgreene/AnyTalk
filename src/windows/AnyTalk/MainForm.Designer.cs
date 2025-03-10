@@ -22,6 +22,10 @@ namespace AnyTalk
                 {
                     _audioRecorder.Dispose();
                 }
+                if (notifyIcon != null)
+                {
+                    notifyIcon.Dispose();
+                }
             }
             base.Dispose(disposing);
         }

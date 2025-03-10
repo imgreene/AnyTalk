@@ -17,7 +17,6 @@ public partial class MainForm : Form
     private bool isRecording;
     private readonly HotkeyManager _hotkeyManager;
     private bool _isRecording = false;
-    private bool _disposed = false;
 
     public MainForm()
     {
@@ -28,43 +27,11 @@ public partial class MainForm : Form
         notifyIcon = new NotifyIcon
         {
             Icon = new Icon("Resources/AppIcon.ico"),
-            Visible = true,
-            Text = "AnyTalk"
+            Visible = true
         };
 
-        contextMenu = new ContextMenuStrip();
-        startRecordingMenuItem = new ToolStripMenuItem("Start Recording");
-        stopRecordingMenuItem = new ToolStripMenuItem("Stop Recording") { Enabled = false };
-        settingsMenuItem = new ToolStripMenuItem("Settings");
-        exitMenuItem = new ToolStripMenuItem("Exit");
-
-        // Set up menu items
-        contextMenu.Items.Add(startRecordingMenuItem);
-        contextMenu.Items.Add(stopRecordingMenuItem);
-        contextMenu.Items.Add(new ToolStripSeparator());
-        contextMenu.Items.Add(settingsMenuItem);
-        contextMenu.Items.Add(new ToolStripSeparator());
-        contextMenu.Items.Add(exitMenuItem);
-
-        notifyIcon.ContextMenuStrip = contextMenu;
-
-        // Initialize audio recorder and settings
         _audioRecorder = new AudioRecorder();
-        settings = SettingsManager.Instance.LoadSettings();
-
-        // Wire up event handlers
-        startRecordingMenuItem.Click += StartRecording;
-        stopRecordingMenuItem.Click += StopRecording;
-        settingsMenuItem.Click += ShowMainWindow;
-        exitMenuItem.Click += Exit;
-        notifyIcon.DoubleClick += ShowMainWindow;
-
-        // Subscribe to word count changes
-        HistoryManager.Instance.WordCountChanged += (s, e) => UpdateWordCount();
         
-        // Initial word count update
-        UpdateWordCount();
-
         _hotkeyManager = new HotkeyManager(
             this.Handle,
             onHotkeyDown: () => {
@@ -122,8 +89,7 @@ public partial class MainForm : Form
         UpdateRecordingState();
         _audioRecorder.StartRecording();
         
-        // Show recording indicator
-        notifyIcon.Icon = Properties.Resources.RecordingIcon; // Make sure to create this icon
+        notifyIcon.Icon = Properties.Resources.RecordingIcon;
         notifyIcon.Text = "AnyTalk (Recording...)";
     }
 
@@ -137,7 +103,6 @@ public partial class MainForm : Form
         _isRecording = false;
         UpdateRecordingState();
         
-        // Reset icon
         notifyIcon.Icon = Properties.Resources.DefaultIcon;
         notifyIcon.Text = "AnyTalk";
 
@@ -223,30 +188,5 @@ public partial class MainForm : Form
     {
         base.OnFormClosing(e);
         SaveSettings();
-    }
-
-    // Clean up any resources being used.
-    protected override void Dispose(bool disposing)
-    {
-        if (!_disposed)
-        {
-            if (disposing)
-            {
-                if (components != null)
-                {
-                    components.Dispose();
-                }
-                if (_hotkeyManager != null)
-                {
-                    _hotkeyManager.Dispose();
-                }
-                if (_audioRecorder != null)
-                {
-                    _audioRecorder.Dispose();
-                }
-            }
-            _disposed = true;
-        }
-        base.Dispose(disposing);
     }
 }
