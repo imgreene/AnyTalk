@@ -1,6 +1,5 @@
 using NAudio.Wave;
-using NAudio.CoreAudioApi;
-using System.IO;
+using System.Threading.Tasks;
 
 namespace AnyTalk.Services
 {
@@ -8,25 +7,8 @@ namespace AnyTalk.Services
     {
         private WaveInEvent? waveIn;
         private WaveFileWriter? writer;
-        private string outputFilePath;
-
-        public AudioRecorder()
-        {
-            outputFilePath = Path.Combine(Path.GetTempPath(), "recording.wav");
-        }
-
-        public static List<string> GetAvailableMicrophones()
-        {
-            var devices = new List<string>();
-            using (var enumerator = new MMDeviceEnumerator())
-            {
-                foreach (var device in enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active))
-                {
-                    devices.Add(device.FriendlyName);
-                }
-            }
-            return devices;
-        }
+        private readonly string outputFilePath = Path.Combine(Path.GetTempPath(), "recording.wav");
+        private Action<string>? onRecordingComplete;
 
         public void StartRecording()
         {
@@ -39,16 +21,26 @@ namespace AnyTalk.Services
                 writer.Write(e.Buffer, 0, e.BytesRecorded);
             };
 
+            waveIn.RecordingStopped += (s, e) =>
+            {
+                writer?.Dispose();
+                writer = null;
+                waveIn?.Dispose();
+                waveIn = null;
+
+                if (File.Exists(outputFilePath))
+                {
+                    onRecordingComplete?.Invoke(outputFilePath);
+                }
+            };
+
             waveIn.StartRecording();
         }
 
-        public void StopRecording()
+        public void StopRecording(Action<string> completionHandler)
         {
+            onRecordingComplete = completionHandler;
             waveIn?.StopRecording();
-            writer?.Dispose();
-            writer = null;
-            waveIn?.Dispose();
-            waveIn = null;
         }
     }
 }

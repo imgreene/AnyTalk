@@ -20,19 +20,16 @@ public class SettingsManager
 
     private SettingsManager()
     {
-        // Get the application data path
         string appDataPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "AnyTalk"
         );
 
-        // Create the directory if it doesn't exist
         if (!Directory.Exists(appDataPath))
         {
             Directory.CreateDirectory(appDataPath);
         }
 
-        // Set the full path for the settings file
         settingsFilePath = Path.Combine(appDataPath, "settings.json");
         settings = LoadSettingsFromFile();
     }
@@ -48,20 +45,18 @@ public class SettingsManager
         SaveSettingsToFile();
     }
 
-    public void SaveHotkey(string hotkey)
-    {
-        settings.HotKey = hotkey;
-        SaveSettingsToFile();
-    }
-
     private Settings LoadSettingsFromFile()
     {
         try
         {
             if (File.Exists(settingsFilePath))
             {
-                var json = File.ReadAllText(settingsFilePath);
-                return JsonSerializer.Deserialize<Settings>(json) ?? new Settings();
+                string json = File.ReadAllText(settingsFilePath);
+                var loadedSettings = JsonSerializer.Deserialize<Settings>(json);
+                if (loadedSettings != null)
+                {
+                    return loadedSettings;
+                }
             }
         }
         catch (Exception ex)
@@ -80,7 +75,10 @@ public class SettingsManager
     {
         try
         {
-            var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+            string json = JsonSerializer.Serialize(settings, new JsonSerializerOptions 
+            { 
+                WriteIndented = true 
+            });
             File.WriteAllText(settingsFilePath, json);
         }
         catch (Exception ex)

@@ -99,8 +99,34 @@ public partial class MainForm : Form
         isRecording = false;
         startRecordingMenuItem.Enabled = true;
         stopRecordingMenuItem.Enabled = false;
-        audioRecorder.StopRecording();
+        audioRecorder.StopRecording(audioFilePath =>
+        {
+            // Process the audio file and update history
+            ProcessRecording(audioFilePath);
+        });
         UpdateWordCount();
+    }
+
+    private async void ProcessRecording(string audioFilePath)
+    {
+        try
+        {
+            // Here you would add the code to send the audio to OpenAI's Whisper API
+            // and process the transcription
+            // Then update the history with the transcribed text
+            
+            // For now, let's just verify the file exists
+            if (File.Exists(audioFilePath))
+            {
+                MessageBox.Show("Recording saved successfully!", "Success", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error processing recording: {ex.Message}", "Error",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     private void ShowMainWindow(object? sender, EventArgs e)
