@@ -1,0 +1,46 @@
+name: Windows Build
+
+on:
+  workflow_dispatch:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '7.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore src/windows/AnyTalk.sln
+    
+    - name: Build
+      run: dotnet build src/windows/AnyTalk.sln --configuration Release --no-restore
+    
+    - name: Publish
+      run: dotnet publish src/windows/AnyTalk.sln --configuration Release --no-build --output publish
+    
+    - name: Install InnoSetup
+      run: |
+        choco install innosetup -y
+        
+    - name: Create Installer
+      run: |
+        iscc /O"output" "installer/windows/setup.iss"
+      
+    - name: Upload Installer to Release
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./output/AnyTalk-Windows-Setup.exe
+        asset_name: AnyTalk-Windows-Setup.exe
+        asset_content_type: application/octet-stream
