@@ -7,12 +7,22 @@ public partial class MainForm : Form
     private Label titleLabel;
     private Label recordingLabel;
     private bool isRecording = false;
-    private HotkeyManager hotkeyManager;
+    private HotkeyManager? hotkeyManager;
 
     public MainForm()
     {
+        // Initialize the form first
         InitializeComponent();
-        hotkeyManager = new HotkeyManager(this.Handle, OnHotkeyPressed);
+        
+        // Then create the hotkey manager
+        try
+        {
+            hotkeyManager = new HotkeyManager(this.Handle, OnHotkeyPressed);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to initialize hotkeys: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     private void InitializeComponent()
@@ -132,20 +142,32 @@ public partial class MainForm : Form
 
     protected override void WndProc(ref Message m)
     {
-        hotkeyManager.HandleHotkey(m);
+        // Safely handle hotkey messages
+        if (hotkeyManager != null)
+        {
+            hotkeyManager.HandleHotkey(m);
+        }
         base.WndProc(ref m);
     }
 
     private void OnHotkeyPressed()
     {
-        // Start recording when hotkey is pressed
+        if (InvokeRequired)
+        {
+            Invoke(new Action(OnHotkeyPressed));
+            return;
+        }
+
         UpdateRecordingState(true);
         // Implement your recording logic here
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
-        hotkeyManager.Cleanup();
+        if (hotkeyManager != null)
+        {
+            hotkeyManager.Cleanup();
+        }
         base.OnFormClosing(e);
     }
 }

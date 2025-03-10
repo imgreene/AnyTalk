@@ -4,10 +4,10 @@ namespace AnyTalk;
 
 public class HotkeyManager
 {
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", SetLastError = true)]
     private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
 
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", SetLastError = true)]
     private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
     // Modifiers
@@ -15,34 +15,55 @@ public class HotkeyManager
     private const uint MOD_CONTROL = 0x0002;
     private const uint MOD_SHIFT = 0x0004;
     private const uint MOD_WIN = 0x0008;
+    private const uint MOD_NOREPEAT = 0x4000;
 
     private const int HOTKEY_ID = 1;
-    private IntPtr Handle;
-    private Action OnHotkeyPressed;
+    private readonly IntPtr _handle;
+    private readonly Action _onHotkeyPressed;
+    private bool _isRegistered;
 
     public HotkeyManager(IntPtr handle, Action onHotkeyPressed)
     {
-        Handle = handle;
-        OnHotkeyPressed = onHotkeyPressed;
+        _handle = handle;
+        _onHotkeyPressed = onHotkeyPressed ?? throw new ArgumentNullException(nameof(onHotkeyPressed));
         RegisterDefaultHotkey();
     }
 
     public void RegisterDefaultHotkey()
     {
-        // Register Ctrl+Alt as default
-        RegisterHotKey(Handle, HOTKEY_ID, MOD_CONTROL | MOD_ALT, 0);
+        if (_isRegistered)
+        {
+            UnregisterHotKey(_handle, HOTKEY_ID);
+        }
+
+        // Register Ctrl+Alt as default with no-repeat flag
+        bool success = RegisterHotKey(_handle, HOTKEY_ID, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, 0);
+        
+        if (!success)
+        {
+            int error = Marshal.GetLastWin32Error();
+            throw new Exception($"Failed to register hotkey. Error code: {error}");
+        }
+
+        _isRegistered = true;
     }
 
     public void HandleHotkey(Message m)
     {
-        if (m.Msg == 0x0312 && m.WParam.ToInt32() == HOTKEY_ID)
+        const int WM_HOTKEY = 0x0312;
+        
+        if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID)
         {
-            OnHotkeyPressed?.Invoke();
+            _onHotkeyPressed?.Invoke();
         }
     }
 
     public void Cleanup()
     {
-        UnregisterHotKey(Handle, HOTKEY_ID);
+        if (_isRegistered)
+        {
+            UnregisterHotKey(_handle, HOTKEY_ID);
+            _isRegistered = false;
+        }
     }
 }
