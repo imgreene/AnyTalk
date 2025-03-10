@@ -12,7 +12,7 @@ public partial class MainForm : Form
     private readonly ToolStripMenuItem stopRecordingMenuItem;
     private readonly ToolStripMenuItem settingsMenuItem;
     private readonly ToolStripMenuItem exitMenuItem;
-    private readonly AudioRecorder audioRecorder;
+    private readonly AudioRecorder _audioRecorder;
     private readonly Settings settings;
     private bool isRecording;
     private readonly HotkeyManager _hotkeyManager;
@@ -48,7 +48,7 @@ public partial class MainForm : Form
         notifyIcon.ContextMenuStrip = contextMenu;
 
         // Initialize audio recorder and settings
-        audioRecorder = new AudioRecorder();
+        _audioRecorder = new AudioRecorder();
         settings = SettingsManager.Instance.LoadSettings();
 
         // Wire up event handlers
@@ -229,7 +229,10 @@ public partial class MainForm : Form
         if (disposing)
         {
             _hotkeyManager?.Dispose();
-            components?.Dispose();
+            if (components != null)
+            {
+                components.Dispose();
+            }
         }
         base.Dispose(disposing);
     }
