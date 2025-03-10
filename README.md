@@ -2,6 +2,11 @@
 
 AnyTalk is a desktop application that provides voice-to-text dictation using OpenAI's Whisper API. It runs in the background and is accessible via a menubar icon (macOS) or system tray icon (Windows).
 
+If you find AnyTalk useful and it helps save you time and money, consider supporting its development:
+```btc
+BTC: bc1qwjy57p4pq6n4qejrvq6yfjjq37unqen33ckakz
+```
+
 ## Features
 
 - **Background Voice Dictation**: 

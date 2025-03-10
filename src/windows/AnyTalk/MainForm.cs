@@ -10,6 +10,9 @@ namespace AnyTalk;
 public partial class MainForm : Form
 {
     private TabControl tabControl = null!;
+    private TabPage homeTab = null!;
+    private TabPage historyTab = null!;
+    private TabPage settingsTab = null!;
     private Panel headerPanel = null!;
     private Label titleLabel = null!;
     private Label recordingLabel = null!;
@@ -30,6 +33,7 @@ public partial class MainForm : Form
         
         LoadHistory();
         InitializeComponent();
+        InitializeTabs();
         InitializeHotkeys();
     }
 
@@ -74,12 +78,11 @@ public partial class MainForm : Form
         // Tab Control
         tabControl = new TabControl
         {
-            Dock = DockStyle.Fill,
-            Padding = new Point(10, 3)
+            Dock = DockStyle.Fill
         };
 
         // Home Tab
-        TabPage homeTab = new TabPage("Home");
+        homeTab = new TabPage("Home");
         wordCountLabel = new Label
         {
             Text = $"Total Words Dictated: {CalculateTotalWords()}",
@@ -89,7 +92,7 @@ public partial class MainForm : Form
         homeTab.Controls.Add(wordCountLabel);
 
         // History Tab
-        TabPage historyTab = new TabPage("History");
+        historyTab = new TabPage("History");
         ListView historyList = new ListView
         {
             Dock = DockStyle.Fill,
@@ -102,10 +105,9 @@ public partial class MainForm : Form
         historyTab.Controls.Add(historyList);
 
         // Settings Tab
-        TabPage settingsTab = new TabPage("Settings");
+        settingsTab = new TabPage("Settings");
         InitializeSettingsTab();
 
-        // Add tabs
         tabControl.TabPages.Add(homeTab);
         tabControl.TabPages.Add(historyTab);
         tabControl.TabPages.Add(settingsTab);
@@ -113,6 +115,28 @@ public partial class MainForm : Form
         // Add controls to form
         this.Controls.Add(headerPanel);
         this.Controls.Add(tabControl);
+    }
+
+    private void InitializeTabs()
+    {
+        tabControl = new TabControl
+        {
+            Dock = DockStyle.Fill
+        };
+
+        homeTab = new TabPage("Home");
+        historyTab = new TabPage("History");
+        settingsTab = new TabPage("Settings");
+
+        tabControl.TabPages.Add(homeTab);
+        tabControl.TabPages.Add(historyTab);
+        tabControl.TabPages.Add(settingsTab);
+
+        Controls.Add(tabControl);
+        
+        InitializeHomeTab();
+        InitializeHistoryTab();
+        InitializeSettingsTab();
     }
 
     private void InitializeSettingsTab()
@@ -387,10 +411,10 @@ public partial class MainForm : Form
                 var devices = audioClient.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active);
                 if (devices.Count > 0)
                 {
-                    // This will trigger the Windows permission prompt if not already granted
                     using (var capture = new WasapiCapture(devices[0]))
                     {
-                        capture.Initialize();
+                        capture.StartRecording(); // Changed from Initialize()
+                        capture.StopRecording();
                     }
                 }
             }
@@ -404,7 +428,6 @@ public partial class MainForm : Form
                 MessageBoxIcon.Warning
             );
             
-            // Open Windows Settings to Microphone privacy settings
             Process.Start(new ProcessStartInfo
             {
                 FileName = "ms-settings:privacy-microphone",

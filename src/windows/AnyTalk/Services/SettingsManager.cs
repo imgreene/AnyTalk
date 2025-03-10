@@ -66,4 +66,13 @@ public class SettingsManager
             }
         }
     }
+
+    public void SetRegistryValue(string name, object? value)
+    {
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AnyTalk");
+        if (value != null)
+        {
+            key.SetValue(name, value);
+        }
+    }
 }
