@@ -3,6 +3,7 @@
 #define MyAppPublisher "imgreene"
 #define MyAppURL "https://github.com/imgreene/anytalk"
 #define MyAppExeName "AnyTalk.exe"
+#define SourcePath "publish"
 
 [Setup]
 AppId={{1A2B3C4D-5E6F-7G8H-9I0J-K1L2M3N4O5P6}}
@@ -28,8 +29,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "publish\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SourcePath}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourcePath}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"

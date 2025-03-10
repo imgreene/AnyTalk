@@ -24,16 +24,17 @@ jobs:
       run: dotnet build src/windows/AnyTalk.sln --configuration Release --no-restore
     
     - name: Publish
-      run: dotnet publish src/windows/AnyTalk.sln --configuration Release --no-build --output publish
+      run: dotnet publish src/windows/AnyTalk.sln --configuration Release --no-build --output installer/windows/publish
     
     - name: Install InnoSetup
       run: |
         choco install innosetup -y
         
     - name: Create Installer
+      working-directory: installer/windows
       run: |
         mkdir -p output
-        iscc /O"output" "installer/windows/setup.iss"
+        iscc setup.iss
       
     - name: Upload Installer to Release
       if: github.event_name == 'release'
@@ -42,6 +43,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./output/AnyTalk-Windows-Setup.exe
+        asset_path: ./installer/windows/output/AnyTalk-Windows-Setup.exe
         asset_name: AnyTalk-Windows-Setup.exe
         asset_content_type: application/octet-stream
