@@ -117,33 +117,57 @@ public partial class MainForm : Form
     {
         try
         {
-            // Here we'll simulate transcription for now
-            // In reality, you'd send this to Whisper API
-            string transcribedText = "This is a test transcription"; // Replace with actual API call
+            this.Invoke(() => this.Cursor = Cursors.WaitCursor);
+
+            var result = await WhisperService.Instance.TranscribeAudio(audioFilePath);
+
+            if (!result.IsSuccess)
+            {
+                string userMessage = result.Error switch
+                {
+                    WhisperError.NoAPIKey => "Please enter your OpenAI API key in Settings first.",
+                    WhisperError.InvalidAudioFile => "The audio file could not be processed.",
+                    WhisperError.NetworkError => $"Network error: {result.ErrorMessage}",
+                    WhisperError.APIError => $"API error: {result.ErrorMessage}",
+                    _ => "An unknown error occurred."
+                };
+
+                MessageBox.Show(userMessage, "Transcription Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var transcribedText = result.Value;
+            if (string.IsNullOrWhiteSpace(transcribedText))
+            {
+                MessageBox.Show("No speech detected in the recording.", 
+                    "Empty Transcription", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
 
             // Save to history
             HistoryManager.Instance.AddEntry(transcribedText);
 
-            // Copy to clipboard
-            Clipboard.SetText(transcribedText);
-
-            // Simulate keyboard paste
-            SendKeys.SendWait("^v");
-
-            this.Invoke(() =>
+            // Copy to clipboard and paste
+            await this.Invoke(async () =>
             {
-                UpdateWordCount();
-                MessageBox.Show("Transcription complete and pasted!", "Success", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Clipboard.SetText(transcribedText);
+                await Task.Delay(100);
+                SendKeys.SendWait("^v");
             });
         }
-        catch (Exception ex)
+        finally
         {
-            this.Invoke(() =>
+            this.Invoke(() => this.Cursor = Cursors.Default);
+            
+            // Cleanup the temporary audio file
+            try
             {
-                MessageBox.Show($"Error processing recording: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            });
+                if (File.Exists(audioFilePath))
+                {
+                    File.Delete(audioFilePath);
+                }
+            }
+            catch { /* ignore cleanup errors */ }
         }
     }
 
