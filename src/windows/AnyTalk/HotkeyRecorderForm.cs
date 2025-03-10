@@ -7,16 +7,16 @@ public partial class HotkeyRecorderForm : Form
     public HotkeyRecorderForm()
     {
         InitializeComponent();
-        this.KeyDown += HotkeyRecorderForm_KeyDown;
-        this.KeyUp += HotkeyRecorderForm_KeyUp;
+        this.KeyDown += new KeyEventHandler(HotkeyRecorderForm_KeyDown!);
+        this.KeyUp += new KeyEventHandler(HotkeyRecorderForm_KeyUp!);
     }
 
-    private void HotkeyRecorderForm_KeyDown(object sender, KeyEventArgs e)
+    private void HotkeyRecorderForm_KeyDown(object? sender, KeyEventArgs e)
     {
         // Implementation
     }
 
-    private void HotkeyRecorderForm_KeyUp(object sender, KeyEventArgs e)
+    private void HotkeyRecorderForm_KeyUp(object? sender, KeyEventArgs e)
     {
         // Implementation
     }
