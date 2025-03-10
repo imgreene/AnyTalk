@@ -6,16 +6,16 @@ namespace AnyTalk;
 
 public partial class MainForm : Form
 {
-    private TabControl tabControl;
-    private Panel headerPanel;
-    private Label titleLabel;
-    private Label recordingLabel;
+    private TabControl tabControl = null!;
+    private Panel headerPanel = null!;
+    private Label titleLabel = null!;
+    private Label recordingLabel = null!;
     private bool isRecording = false;
     private HotkeyManager? hotkeyManager;
     private List<TranscriptionEntry> historyEntries = new();
-    private Label wordCountLabel;
-    private TextBox apiKeyTextBox;
-    private string historyFilePath;
+    private Label wordCountLabel = null!;
+    private TextBox apiKeyTextBox = null!;
+    private string historyFilePath = null!;
 
     public MainForm()
     {
@@ -148,15 +148,17 @@ public partial class MainForm : Form
         this.Controls.Add(tabControl);
     }
 
-    private void ApiKeyTextBox_TextChanged(object sender, EventArgs e)
+    private void ApiKeyTextBox_TextChanged(object? sender, EventArgs e)
     {
         SettingsManager.Instance.ApiKey = apiKeyTextBox.Text;
     }
 
-    private void StartupCheckBox_CheckedChanged(object sender, EventArgs e)
+    private void StartupCheckBox_CheckedChanged(object? sender, EventArgs e)
     {
-        CheckBox checkBox = (CheckBox)sender;
-        SettingsManager.Instance.LaunchAtStartup = checkBox.Checked;
+        if (sender is CheckBox checkBox)
+        {
+            SettingsManager.Instance.LaunchAtStartup = checkBox.Checked;
+        }
     }
 
     private void UpdateHistoryList(ListView listView)
@@ -211,9 +213,13 @@ public partial class MainForm : Form
     {
         try
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(historyFilePath));
-            string json = JsonSerializer.Serialize(historyEntries);
-            File.WriteAllText(historyFilePath, json);
+            string? directoryPath = Path.GetDirectoryName(historyFilePath);
+            if (directoryPath != null)
+            {
+                Directory.CreateDirectory(directoryPath);
+                string json = JsonSerializer.Serialize(historyEntries);
+                File.WriteAllText(historyFilePath, json);
+            }
         }
         catch (Exception ex)
         {

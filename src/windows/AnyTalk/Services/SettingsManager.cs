@@ -42,22 +42,28 @@ public class SettingsManager
         return (T)Convert.ChangeType(value, typeof(T));
     }
 
-    private void SaveSetting<T>(string name, T value)
+    private void SaveSetting<T>(string name, T? value)
     {
         using var key = Registry.CurrentUser.CreateSubKey(RegPath);
-        key.SetValue(name, value);
+        if (key != null)
+        {
+            key.SetValue(name, value);
+        }
     }
 
     private void SetStartupRegistry(bool enable)
     {
         using var key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
-        if (enable)
+        if (key != null)
         {
-            key.SetValue(AppName, Application.ExecutablePath);
-        }
-        else
-        {
-            key.DeleteValue(AppName, false);
+            if (enable)
+            {
+                key.SetValue(AppName, Application.ExecutablePath);
+            }
+            else
+            {
+                key.DeleteValue(AppName, false);
+            }
         }
     }
 }
