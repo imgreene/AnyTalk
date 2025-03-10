@@ -25,15 +25,9 @@ public partial class MainForm : Form
 
     public MainForm()
     {
-        historyFilePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "AnyTalk",
-            "history.json"
-        );
-        
-        LoadHistory();
         InitializeComponent();
         InitializeTabs();
+        LoadHistory();
         InitializeHotkeys();
     }
 
@@ -139,70 +133,81 @@ public partial class MainForm : Form
         InitializeSettingsTab();
     }
 
+    private void InitializeHomeTab()
+    {
+        wordCountLabel = new Label
+        {
+            Text = $"Total Words Dictated: {CalculateTotalWords()}",
+            AutoSize = true,
+            Location = new Point(20, 20)
+        };
+        homeTab.Controls.Add(wordCountLabel);
+
+        recordingLabel = new Label
+        {
+            Text = "Press Ctrl+Alt to start dictating",
+            AutoSize = true,
+            Location = new Point(20, 50)
+        };
+        homeTab.Controls.Add(recordingLabel);
+    }
+
+    private void InitializeHistoryTab()
+    {
+        var historyList = new ListView
+        {
+            Dock = DockStyle.Fill,
+            View = View.Details,
+            FullRowSelect = true
+        };
+
+        historyList.Columns.Add("Date", 150);
+        historyList.Columns.Add("Text", 400);
+        historyList.Columns.Add("Words", 70);
+
+        UpdateHistoryList(historyList);
+        historyTab.Controls.Add(historyList);
+    }
+
     private void InitializeSettingsTab()
     {
-        TableLayoutPanel settingsLayout = new TableLayoutPanel
+        var layout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 5,
-            Padding = new Padding(20),
-            ColumnStyles = {
-                new ColumnStyle(SizeType.AutoSize),
-                new ColumnStyle(SizeType.Percent, 100)
-            }
+            RowCount = 2,
+            Padding = new Padding(10)
         };
 
-        // Hotkey
-        settingsLayout.Controls.Add(new Label { Text = "Hotkey:" }, 0, 0);
-        settingsLayout.Controls.Add(new TextBox 
-        { 
-            Width = 200, 
-            Text = "Ctrl+Alt", 
-            ReadOnly = true 
-        }, 1, 0);
-
-        // Microphone Selection
-        settingsLayout.Controls.Add(new Label { Text = "Microphone:" }, 0, 1);
-        ComboBox microphoneCombo = new ComboBox
+        layout.Controls.Add(new Label { Text = "OpenAI API Key:" }, 0, 0);
+        
+        apiKeyTextBox = new TextBox
         {
-            Width = 200,
-            DropDownStyle = ComboBoxStyle.DropDownList
+            Width = 300,
+            PasswordChar = '•'
         };
-        PopulateMicrophoneList(microphoneCombo);
-        settingsLayout.Controls.Add(microphoneCombo, 1, 1);
+        layout.Controls.Add(apiKeyTextBox, 1, 0);
 
-        // API Key
-        settingsLayout.Controls.Add(new Label { Text = "OpenAI API Key:" }, 0, 2);
-        TextBox apiKeyBox = new TextBox
+        var saveButton = new Button
         {
-            Width = 200,
-            PasswordChar = '•',
-            Text = SettingsManager.Instance.ApiKey
+            Text = "Save Settings",
+            AutoSize = true
         };
-        apiKeyBox.TextChanged += (s, e) => SettingsManager.Instance.ApiKey = apiKeyBox.Text;
-        settingsLayout.Controls.Add(apiKeyBox, 1, 2);
+        saveButton.Click += SaveSettings_Click;
+        layout.Controls.Add(saveButton, 1, 1);
 
-        // Language Selection
-        settingsLayout.Controls.Add(new Label { Text = "Language:" }, 0, 3);
-        ComboBox languageCombo = new ComboBox
-        {
-            Width = 200,
-            DropDownStyle = ComboBoxStyle.DropDownList
-        };
-        PopulateLanguageList(languageCombo);
-        settingsLayout.Controls.Add(languageCombo, 1, 3);
+        settingsTab.Controls.Add(layout);
 
-        // Launch at startup
-        settingsLayout.Controls.Add(new Label { Text = "Launch at startup:" }, 0, 4);
-        CheckBox startupCheckBox = new CheckBox
-        {
-            Checked = SettingsManager.Instance.LaunchAtStartup
-        };
-        startupCheckBox.CheckedChanged += StartupCheckBox_CheckedChanged;
-        settingsLayout.Controls.Add(startupCheckBox, 1, 4);
+        // Load saved API key
+        var settings = new SettingsManager();
+        apiKeyTextBox.Text = settings.GetApiKey();
+    }
 
-        settingsTab.Controls.Add(settingsLayout);
+    private void SaveSettings_Click(object sender, EventArgs e)
+    {
+        var settings = new SettingsManager();
+        settings.SaveApiKey(apiKeyTextBox.Text);
+        MessageBox.Show("Settings saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     private void PopulateMicrophoneList(ComboBox combo)
@@ -259,6 +264,7 @@ public partial class MainForm : Form
         {
             var item = new ListViewItem(entry.Timestamp.ToString("g"));
             item.SubItems.Add(entry.Text);
+            item.SubItems.Add(entry.WordCount.ToString());
             listView.Items.Add(item);
         }
     }
