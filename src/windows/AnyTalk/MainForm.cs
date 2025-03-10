@@ -17,6 +17,7 @@ public partial class MainForm : Form
     private bool isRecording;
     private readonly HotkeyManager _hotkeyManager;
     private bool _isRecording = false;
+    private bool _disposed = false;
 
     public MainForm()
     {
@@ -224,15 +225,27 @@ public partial class MainForm : Form
         SaveSettings();
     }
 
+    // Clean up any resources being used.
     protected override void Dispose(bool disposing)
     {
-        if (disposing)
+        if (!_disposed)
         {
-            _hotkeyManager?.Dispose();
-            if (components != null)
+            if (disposing)
             {
-                components.Dispose();
+                if (components != null)
+                {
+                    components.Dispose();
+                }
+                if (_hotkeyManager != null)
+                {
+                    _hotkeyManager.Dispose();
+                }
+                if (_audioRecorder != null)
+                {
+                    _audioRecorder.Dispose();
+                }
             }
+            _disposed = true;
         }
         base.Dispose(disposing);
     }
