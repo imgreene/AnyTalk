@@ -76,20 +76,48 @@ public class WhisperService
             var response = await httpClient.SendAsync(request);
             var responseBody = await response.Content.ReadAsStringAsync();
 
+            // Add debug logging
+            Console.WriteLine($"Response Status Code: {response.StatusCode}");
+            Console.WriteLine($"Response Body: {responseBody}");
+
             if (!response.IsSuccessStatusCode)
             {
-                var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(responseBody);
-                var errorMessage = errorResponse?.Error?.Message ?? $"API error with status code: {response.StatusCode}";
-                return Result<string>.Failure(WhisperError.APIError, errorMessage);
+                try
+                {
+                    var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(responseBody);
+                    var errorMessage = errorResponse?.Error?.Message ?? $"API error with status code: {response.StatusCode}";
+                    return Result<string>.Failure(WhisperError.APIError, errorMessage);
+                }
+                catch (JsonException ex)
+                {
+                    return Result<string>.Failure(WhisperError.APIError, $"Failed to parse error response: {responseBody}");
+                }
             }
 
-            var result = JsonSerializer.Deserialize<WhisperResponse>(responseBody);
-            if (string.IsNullOrEmpty(result?.Text))
+            try
             {
-                return Result<string>.Failure(WhisperError.APIError, "Could not parse response");
+                // Match the Mac implementation's response structure
+                using var jsonDoc = JsonDocument.Parse(responseBody);
+                var root = jsonDoc.RootElement;
+                
+                if (root.TryGetProperty("text", out var textElement))
+                {
+                    var transcribedText = textElement.GetString();
+                    if (!string.IsNullOrEmpty(transcribedText))
+                    {
+                        return Result<string>.Success(transcribedText);
+                    }
+                }
+                
+                // If we get here, we couldn't find the text property
+                return Result<string>.Failure(WhisperError.APIError, 
+                    $"Could not find 'text' in response: {responseBody}");
             }
-
-            return Result<string>.Success(result.Text);
+            catch (JsonException ex)
+            {
+                return Result<string>.Failure(WhisperError.APIError, 
+                    $"Failed to parse success response: {ex.Message}. Response: {responseBody}");
+            }
         }
         catch (Exception ex)
         {
