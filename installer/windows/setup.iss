@@ -1,11 +1,11 @@
 #define MyAppName "AnyTalk"
 #define MyAppVersion "1.0.0"
-#define MyAppPublisher "Your Name"
-#define MyAppURL "https://github.com/yourusername/anytalk"
+#define MyAppPublisher "imgreene"
+#define MyAppURL "https://github.com/imgreene/anytalk"
 #define MyAppExeName "AnyTalk.exe"
 
 [Setup]
-AppId={{YOUR-GUID-HERE}}
+AppId={{1A2B3C4D-5E6F-7G8H-9I0J-K1L2M3N4O5P6}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
