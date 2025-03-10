@@ -1,3 +1,7 @@
+using AnyTalk.Models;
+using AnyTalk.Services;
+using System.Text.Json;
+
 namespace AnyTalk;
 
 public partial class MainForm : Form
@@ -8,28 +12,29 @@ public partial class MainForm : Form
     private Label recordingLabel;
     private bool isRecording = false;
     private HotkeyManager? hotkeyManager;
+    private List<TranscriptionEntry> historyEntries = new();
+    private Label wordCountLabel;
+    private TextBox apiKeyTextBox;
+    private string historyFilePath;
 
     public MainForm()
     {
-        // Initialize the form first
-        InitializeComponent();
+        historyFilePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "AnyTalk",
+            "history.json"
+        );
         
-        // Then create the hotkey manager
-        try
-        {
-            hotkeyManager = new HotkeyManager(this.Handle, OnHotkeyPressed);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Failed to initialize hotkeys: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
+        LoadHistory();
+        InitializeComponent();
+        InitializeHotkeys();
     }
 
     private void InitializeComponent()
     {
         // Form settings
         this.Text = "AnyTalk";
-        this.Size = new Size(320, 480);
+        this.Size = new Size(400, 500);
         this.MinimumSize = new Size(320, 400);
         this.FormBorderStyle = FormBorderStyle.FixedSingle;
         this.MaximizeBox = false;
@@ -72,36 +77,25 @@ public partial class MainForm : Form
 
         // Home Tab
         TabPage homeTab = new TabPage("Home");
-        homeTab.Padding = new Padding(10);
-        
-        Label wordCountLabel = new Label
+        wordCountLabel = new Label
         {
-            Text = "Total Words Dictated",
-            Font = new Font("Segoe UI", 10),
-            Location = new Point(10, 20),
-            AutoSize = true
+            Text = $"Total Words Dictated: {CalculateTotalWords()}",
+            AutoSize = true,
+            Location = new Point(10, 10)
         };
-
-        Label wordCount = new Label
-        {
-            Text = "0",
-            Font = new Font("Segoe UI", 24, FontStyle.Bold),
-            Location = new Point(10, 50),
-            AutoSize = true
-        };
-
         homeTab.Controls.Add(wordCountLabel);
-        homeTab.Controls.Add(wordCount);
 
         // History Tab
         TabPage historyTab = new TabPage("History");
         ListView historyList = new ListView
         {
             Dock = DockStyle.Fill,
-            View = View.Details
+            View = View.Details,
+            FullRowSelect = true
         };
-        historyList.Columns.Add("Date", 100);
-        historyList.Columns.Add("Text", 180);
+        historyList.Columns.Add("Date", 150);
+        historyList.Columns.Add("Text", 200);
+        UpdateHistoryList(historyList);
         historyTab.Controls.Add(historyList);
 
         // Settings Tab
@@ -114,12 +108,33 @@ public partial class MainForm : Form
             ColumnCount = 2
         };
 
+        // API Key
         settingsLayout.Controls.Add(new Label { Text = "API Key:" }, 0, 0);
-        settingsLayout.Controls.Add(new TextBox { Width = 200 }, 1, 0);
+        apiKeyTextBox = new TextBox 
+        { 
+            Width = 200,
+            Text = SettingsManager.Instance.ApiKey
+        };
+        apiKeyTextBox.TextChanged += ApiKeyTextBox_TextChanged;
+        settingsLayout.Controls.Add(apiKeyTextBox, 1, 0);
+
+        // Hotkey
         settingsLayout.Controls.Add(new Label { Text = "Hotkey:" }, 0, 1);
-        settingsLayout.Controls.Add(new TextBox { Width = 200, Text = "Ctrl+Alt", ReadOnly = true }, 1, 1);
+        settingsLayout.Controls.Add(new TextBox 
+        { 
+            Width = 200, 
+            Text = "Ctrl+Alt", 
+            ReadOnly = true 
+        }, 1, 1);
+
+        // Launch at startup
         settingsLayout.Controls.Add(new Label { Text = "Launch at startup:" }, 0, 2);
-        settingsLayout.Controls.Add(new CheckBox(), 1, 2);
+        CheckBox startupCheckBox = new CheckBox
+        {
+            Checked = SettingsManager.Instance.LaunchAtStartup
+        };
+        startupCheckBox.CheckedChanged += StartupCheckBox_CheckedChanged;
+        settingsLayout.Controls.Add(startupCheckBox, 1, 2);
 
         settingsTab.Controls.Add(settingsLayout);
 
@@ -133,9 +148,128 @@ public partial class MainForm : Form
         this.Controls.Add(tabControl);
     }
 
-    public void UpdateRecordingState(bool recording)
+    private void ApiKeyTextBox_TextChanged(object sender, EventArgs e)
     {
-        isRecording = recording;
+        SettingsManager.Instance.ApiKey = apiKeyTextBox.Text;
+    }
+
+    private void StartupCheckBox_CheckedChanged(object sender, EventArgs e)
+    {
+        CheckBox checkBox = (CheckBox)sender;
+        SettingsManager.Instance.LaunchAtStartup = checkBox.Checked;
+    }
+
+    private void UpdateHistoryList(ListView listView)
+    {
+        listView.Items.Clear();
+        foreach (var entry in historyEntries)
+        {
+            var item = new ListViewItem(entry.Timestamp.ToString("g"));
+            item.SubItems.Add(entry.Text);
+            listView.Items.Add(item);
+        }
+    }
+
+    private int CalculateTotalWords()
+    {
+        return historyEntries.Sum(entry => entry.WordCount);
+    }
+
+    public void AddTranscription(string text)
+    {
+        var entry = new TranscriptionEntry(text);
+        historyEntries.Insert(0, entry);
+        SaveHistory();
+        
+        wordCountLabel.Text = $"Total Words Dictated: {CalculateTotalWords()}";
+        
+        if (tabControl.SelectedTab.Text == "History")
+        {
+            var historyList = (ListView)tabControl.SelectedTab.Controls[0];
+            UpdateHistoryList(historyList);
+        }
+    }
+
+    private void LoadHistory()
+    {
+        try
+        {
+            if (File.Exists(historyFilePath))
+            {
+                string json = File.ReadAllText(historyFilePath);
+                historyEntries = JsonSerializer.Deserialize<List<TranscriptionEntry>>(json) ?? new List<TranscriptionEntry>();
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error loading history: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            historyEntries = new List<TranscriptionEntry>();
+        }
+    }
+
+    private void SaveHistory()
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(historyFilePath));
+            string json = JsonSerializer.Serialize(historyEntries);
+            File.WriteAllText(historyFilePath, json);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error saving history: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    private void InitializeHotkeys()
+    {
+        hotkeyManager = new HotkeyManager(
+            this.Handle,
+            onHotkeyDown: () => {
+                if (!isRecording)
+                {
+                    StartRecording();
+                }
+            },
+            onHotkeyUp: () => {
+                if (isRecording)
+                {
+                    StopRecording();
+                }
+            }
+        );
+    }
+
+    private void StartRecording()
+    {
+        if (InvokeRequired)
+        {
+            Invoke(new Action(StartRecording));
+            return;
+        }
+
+        isRecording = true;
+        UpdateRecordingState(true);
+        // Start your audio recording here
+        System.Media.SystemSounds.Asterisk.Play(); // Optional: Play sound to indicate recording started
+    }
+
+    private void StopRecording()
+    {
+        if (InvokeRequired)
+        {
+            Invoke(new Action(StopRecording));
+            return;
+        }
+
+        isRecording = false;
+        UpdateRecordingState(false);
+        // Stop recording and process the audio here
+        System.Media.SystemSounds.Hand.Play(); // Optional: Play sound to indicate recording stopped
+    }
+
+    private void UpdateRecordingState(bool recording)
+    {
         recordingLabel.Visible = recording;
         recordingLabel.Text = recording ? "● Recording" : "";
     }

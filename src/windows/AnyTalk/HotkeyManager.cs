@@ -15,17 +15,19 @@ public class HotkeyManager
     private const uint MOD_CONTROL = 0x0002;
     private const uint MOD_SHIFT = 0x0004;
     private const uint MOD_WIN = 0x0008;
-    private const uint MOD_NOREPEAT = 0x4000;
 
-    private const int HOTKEY_ID = 1;
+    private const int HOTKEY_ID_DOWN = 1;
+    private const int HOTKEY_ID_UP = 2;
     private readonly IntPtr _handle;
-    private readonly Action _onHotkeyPressed;
+    private readonly Action _onHotkeyDown;
+    private readonly Action _onHotkeyUp;
     private bool _isRegistered;
 
-    public HotkeyManager(IntPtr handle, Action onHotkeyPressed)
+    public HotkeyManager(IntPtr handle, Action onHotkeyDown, Action onHotkeyUp)
     {
         _handle = handle;
-        _onHotkeyPressed = onHotkeyPressed ?? throw new ArgumentNullException(nameof(onHotkeyPressed));
+        _onHotkeyDown = onHotkeyDown ?? throw new ArgumentNullException(nameof(onHotkeyDown));
+        _onHotkeyUp = onHotkeyUp ?? throw new ArgumentNullException(nameof(onHotkeyUp));
         RegisterDefaultHotkey();
     }
 
@@ -33,13 +35,15 @@ public class HotkeyManager
     {
         if (_isRegistered)
         {
-            UnregisterHotKey(_handle, HOTKEY_ID);
+            UnregisterHotKey(_handle, HOTKEY_ID_DOWN);
+            UnregisterHotKey(_handle, HOTKEY_ID_UP);
         }
 
-        // Register Ctrl+Alt as default with no-repeat flag
-        bool success = RegisterHotKey(_handle, HOTKEY_ID, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, 0);
+        // Register for both key down and key up events
+        bool successDown = RegisterHotKey(_handle, HOTKEY_ID_DOWN, MOD_CONTROL | MOD_ALT, 0);
+        bool successUp = RegisterHotKey(_handle, HOTKEY_ID_UP, 0, 0);  // Register for key up with no modifiers
         
-        if (!success)
+        if (!successDown || !successUp)
         {
             int error = Marshal.GetLastWin32Error();
             throw new Exception($"Failed to register hotkey. Error code: {error}");
@@ -52,9 +56,17 @@ public class HotkeyManager
     {
         const int WM_HOTKEY = 0x0312;
         
-        if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID)
+        if (m.Msg == WM_HOTKEY)
         {
-            _onHotkeyPressed?.Invoke();
+            int id = m.WParam.ToInt32();
+            if (id == HOTKEY_ID_DOWN)
+            {
+                _onHotkeyDown?.Invoke();
+            }
+            else if (id == HOTKEY_ID_UP)
+            {
+                _onHotkeyUp?.Invoke();
+            }
         }
     }
 
@@ -62,7 +74,8 @@ public class HotkeyManager
     {
         if (_isRegistered)
         {
-            UnregisterHotKey(_handle, HOTKEY_ID);
+            UnregisterHotKey(_handle, HOTKEY_ID_DOWN);
+            UnregisterHotKey(_handle, HOTKEY_ID_UP);
             _isRegistered = false;
         }
     }
