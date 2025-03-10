@@ -93,7 +93,7 @@ AnyTalk is a desktop application that provides voice-to-text dictation using Ope
 
 ## Support
 
-For issues, feature requests, or contributions, please visit our [GitHub repository](https://github.com/yourusername/anytalk).
+For issues, feature requests, or contributions, please visit our [GitHub repository](https://github.com/imgreene/anytalk).
 
 ## License
 
