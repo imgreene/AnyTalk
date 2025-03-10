@@ -1,0 +1,28 @@
+# Xcode
+.DS_Store
+xcuserdata/
+*.xcworkspace/
+DerivedData/
+
+# Build products
+build/
+*.o
+*.LinkFileList
+*.hmap
+
+# Secrets
+**/Config/Secrets.swift
+**/Config/Secrets.cs
+
+# Windows-specific
+*.exe
+*.dll
+*.pdb
+obj/
+bin/
+
+# IDE-specific files
+.idea/
+.vs/
+*.swp
+*.swo
