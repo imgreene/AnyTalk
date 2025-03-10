@@ -1,64 +1,57 @@
-using Microsoft.Win32;
+using AnyTalk.Models;
 
 namespace AnyTalk.Services;
 
 public class SettingsManager
 {
-    private const string AppName = "AnyTalk";
-    private const string RegPath = @"SOFTWARE\AnyTalk";
-    
-    public static SettingsManager Instance { get; } = new SettingsManager();
+    private static SettingsManager? instance;
+    private Settings settings;
+    private const string SettingsFileName = "settings.json";
 
-    public string ApiKey
+    public static SettingsManager Instance
     {
-        get => GetSetting("ApiKey", "");
-        set => SaveSetting("ApiKey", value);
-    }
-
-    public bool LaunchAtStartup
-    {
-        get => GetSetting("LaunchAtStartup", false);
-        set
+        get
         {
-            SaveSetting("LaunchAtStartup", value);
-            SetStartupRegistry(value);
+            instance ??= new SettingsManager();
+            return instance;
         }
     }
 
-    public string PreferredLanguage
+    private SettingsManager()
     {
-        get => GetSetting("PreferredLanguage", "en");
-        set => SaveSetting("PreferredLanguage", value);
+        settings = LoadSettingsFromFile();
     }
 
-    private T GetSetting<T>(string name, T defaultValue)
+    public Settings LoadSettings()
     {
-        using var key = Registry.CurrentUser.CreateSubKey(RegPath);
-        var value = key.GetValue(name);
-        return value != null ? (T)Convert.ChangeType(value, typeof(T)) : defaultValue;
+        return settings;
     }
 
-    private void SaveSetting<T>(string name, T value)
+    public void SaveApiKey(string apiKey)
     {
-        using var key = Registry.CurrentUser.CreateSubKey(RegPath);
-        key.SetValue(name, value?.ToString() ?? string.Empty);
+        settings.ApiKey = apiKey;
+        SaveSettingsToFile();
     }
 
-    private void SetStartupRegistry(bool enable)
+    public void SaveHotkey(string hotkey)
     {
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run");
-        if (enable)
+        settings.HotKey = hotkey;
+        SaveSettingsToFile();
+    }
+
+    private Settings LoadSettingsFromFile()
+    {
+        if (File.Exists(SettingsFileName))
         {
-            var exePath = Application.ExecutablePath;
-            key.SetValue(AppName, exePath);
+            var json = File.ReadAllText(SettingsFileName);
+            return System.Text.Json.JsonSerializer.Deserialize<Settings>(json) ?? new Settings();
         }
-        else
-        {
-            key.DeleteValue(AppName, false);
-        }
+        return new Settings();
     }
 
-    // Compatibility methods for existing code
-    public string GetApiKey() => ApiKey;
-    public void SaveApiKey(string apiKey) => ApiKey = apiKey;
+    private void SaveSettingsToFile()
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(settings);
+        File.WriteAllText(SettingsFileName, json);
+    }
 }
