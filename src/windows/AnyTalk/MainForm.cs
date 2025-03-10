@@ -9,22 +9,38 @@ namespace AnyTalk;
 
 public partial class MainForm : Form
 {
-    private readonly TabControl tabControl = null!;
-    private readonly TabPage homeTab = null!;
-    private readonly TabPage historyTab = null!;
-    private readonly TabPage settingsTab = null!;
-    private readonly Panel headerPanel = null!;
-    private readonly Label titleLabel = null!;
-    private readonly Label recordingLabel = null!;
+    private readonly TabControl tabControl;
+    private readonly TabPage homeTab;
+    private readonly TabPage historyTab;
+    private readonly TabPage settingsTab;
+    private readonly Panel headerPanel;
+    private readonly Label titleLabel;
+    private readonly Label recordingLabel;
     private bool isRecording = false;
     private HotkeyManager? hotkeyManager;
     private readonly List<TranscriptionEntry> historyEntries = new();
-    private readonly Label wordCountLabel = null!;
-    private readonly TextBox apiKeyTextBox = null!;
+    private readonly Label wordCountLabel;
+    private readonly TextBox apiKeyTextBox;
     private readonly string historyFilePath;
 
     public MainForm()
     {
+        // Initialize readonly fields in constructor
+        tabControl = new TabControl();
+        homeTab = new TabPage("Home");
+        historyTab = new TabPage("History");
+        settingsTab = new TabPage("Settings");
+        headerPanel = new Panel();
+        titleLabel = new Label();
+        recordingLabel = new Label();
+        wordCountLabel = new Label();
+        apiKeyTextBox = new TextBox();
+        historyFilePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "AnyTalk",
+            "history.json"
+        );
+
         InitializeComponent();
         InitializeTabs();
         LoadHistory();
@@ -41,72 +57,31 @@ public partial class MainForm : Form
         this.MaximizeBox = false;
         this.StartPosition = FormStartPosition.CenterScreen;
 
-        // Header Panel
-        headerPanel = new Panel
-        {
-            Dock = DockStyle.Top,
-            Height = 40,
-            BackColor = SystemColors.Control
-        };
+        // Configure the initialized components
+        headerPanel.Dock = DockStyle.Top;
+        headerPanel.Height = 40;
+        headerPanel.BackColor = SystemColors.Control;
 
-        titleLabel = new Label
-        {
-            Text = "AnyTalk",
-            Font = new Font("Segoe UI", 12, FontStyle.Bold),
-            Location = new Point(10, 10),
-            AutoSize = true
-        };
+        titleLabel.Text = "AnyTalk";
+        titleLabel.Font = new Font("Segoe UI", 12, FontStyle.Bold);
+        titleLabel.Location = new Point(10, 10);
+        titleLabel.AutoSize = true;
 
-        recordingLabel = new Label
-        {
-            Text = "Recording",
-            ForeColor = Color.Orange,
-            Visible = false,
-            Location = new Point(headerPanel.Width - 80, 10),
-            AutoSize = true
-        };
+        recordingLabel.Text = "Recording";
+        recordingLabel.ForeColor = Color.Orange;
+        recordingLabel.Visible = false;
+        recordingLabel.Location = new Point(headerPanel.Width - 80, 10);
+        recordingLabel.AutoSize = true;
 
+        // Add controls
         headerPanel.Controls.Add(titleLabel);
         headerPanel.Controls.Add(recordingLabel);
-
-        // Tab Control
-        tabControl = new TabControl
-        {
-            Dock = DockStyle.Fill
-        };
-
-        // Home Tab
-        homeTab = new TabPage("Home");
-        wordCountLabel = new Label
-        {
-            Text = $"Total Words Dictated: {CalculateTotalWords()}",
-            AutoSize = true,
-            Location = new Point(10, 10)
-        };
-        homeTab.Controls.Add(wordCountLabel);
-
-        // History Tab
-        historyTab = new TabPage("History");
-        ListView historyList = new ListView
-        {
-            Dock = DockStyle.Fill,
-            View = View.Details,
-            FullRowSelect = true
-        };
-        historyList.Columns.Add("Date", 150);
-        historyList.Columns.Add("Text", 200);
-        UpdateHistoryList(historyList);
-        historyTab.Controls.Add(historyList);
-
-        // Settings Tab
-        settingsTab = new TabPage("Settings");
-        InitializeSettingsTab();
-
+        
+        tabControl.Dock = DockStyle.Fill;
         tabControl.TabPages.Add(homeTab);
         tabControl.TabPages.Add(historyTab);
         tabControl.TabPages.Add(settingsTab);
 
-        // Add controls to form
         this.Controls.Add(headerPanel);
         this.Controls.Add(tabControl);
     }

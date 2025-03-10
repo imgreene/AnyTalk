@@ -12,7 +12,7 @@ AnyTalk requires your own OpenAI API key to function. You will be charged by Ope
 Based on different speaking speeds:
 - At 100 words/minute: ~$6.00 (16.7 minutes)
 - At 120 words/minute: ~$5.00 (13.9 minutes)
-- At 150 words/minute: ~$4.00 (11.1 minutes)
+- At 150 words/minute: ~$4.00 (11.1 minutes) (average)
 - At 200 words/minute: ~$3.00 (8.3 minutes)
 
 These estimates are approximate and actual costs may vary based on factors like pauses between words and API pricing changes. Visit [OpenAI's pricing page](https://openai.com/pricing) for current rates.
