@@ -20,6 +20,7 @@
 		8A0F7A382A1B2E9E008A8F83 /* Services/SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0F7A372A1B2E9E008A8F83 /* Services/SettingsManager.swift */; };
 		8A0F7A3A2A1B2E9E008A8F83 /* Services/WhisperService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0F7A392A1B2E9E008A8F83 /* Services/WhisperService.swift */; };
 		8A0F7A3C2A1B2E9E008A8F83 /* Utilities/KeyCodeMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0F7A3B2A1B2E9E008A8F83 /* Utilities/KeyCodeMap.swift */; };
+		ABDF40B62D7F60C3007F38AE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ABDF40B52D7F60C3007F38AE /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +39,8 @@
 		8A0F7A392A1B2E9E008A8F83 /* Services/WhisperService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/WhisperService.swift; sourceTree = "<group>"; };
 		8A0F7A3B2A1B2E9E008A8F83 /* Utilities/KeyCodeMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities/KeyCodeMap.swift; sourceTree = "<group>"; };
 		8A0F7A3D2A1B2E9E008A8F83 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		ABDF40B02D7F5A67007F38AE /* AnyTalk.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AnyTalk.entitlements; sourceTree = "<group>"; };
+		ABDF40B52D7F60C3007F38AE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,6 +73,8 @@
 		8A0F7A222A1B2E9C008A8F83 /* AnyTalk */ = {
 			isa = PBXGroup;
 			children = (
+				ABDF40B02D7F5A67007F38AE /* AnyTalk.entitlements */,
+				ABDF40B42D7F609C007F38AE /* Resources */,
 				8A0F7A232A1B2E9C008A8F83 /* AnyTalkApp.swift */,
 				8A0F7A252A1B2E9C008A8F83 /* AppDelegate.swift */,
 				8A0F7A272A1B2E9E008A8F83 /* Views/ContentView.swift */,
@@ -86,6 +91,14 @@
 				8A0F7A3D2A1B2E9E008A8F83 /* Info.plist */,
 			);
 			path = AnyTalk;
+			sourceTree = "<group>";
+		};
+		ABDF40B42D7F609C007F38AE /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				ABDF40B52D7F60C3007F38AE /* Assets.xcassets */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -145,6 +158,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ABDF40B62D7F60C3007F38AE /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -294,11 +308,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_ENTITLEMENTS = AnyTalk/AnyTalk.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
-				DEVELOPMENT_TEAM = RA5MM4R8J3;
+				DEVELOPMENT_TEAM = 6TJA44X4CE;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = AnyTalk/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -306,8 +323,9 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.AnyTalk;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.imgreene.anytalk;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
@@ -317,11 +335,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_ENTITLEMENTS = AnyTalk/AnyTalk.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
-				DEVELOPMENT_TEAM = RA5MM4R8J3;
+				DEVELOPMENT_TEAM = 6TJA44X4CE;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = AnyTalk/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -329,8 +350,9 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.AnyTalk;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.imgreene.anytalk;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;

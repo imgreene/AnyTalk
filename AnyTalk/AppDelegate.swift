@@ -256,22 +256,62 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func pasteTextAtCursor(_ text: String) {
+        // First ensure the text is in the clipboard
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        
+        // Verify clipboard content
+        guard let clipboardText = NSPasteboard.general.string(forType: .string) else {
+            print("Failed to set clipboard text")
+            return
+        }
+        
+        print("Text successfully copied to clipboard: \(clipboardText)")
+        
         // Get the frontmost application
-        if let frontmostApp = NSWorkspace.shared.frontmostApplication {
-            // Activate the frontmost application
-            NSRunningApplication.current.activate(options: [])
+        guard let frontmostApp = NSWorkspace.shared.frontmostApplication else {
+            print("No frontmost application found")
+            return
+        }
+        
+        print("Attempting to paste in app: \(frontmostApp.localizedName ?? "Unknown")")
+        
+        // Create a sequence of events
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            // Ensure we're in the right app
             frontmostApp.activate(options: .activateIgnoringOtherApps)
             
-            // Wait a moment for the app to activate
+            // Wait for app activation
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                // Create a paste event
-                let pasteCommand = CGEvent(keyboardEventSource: nil, virtualKey: 0x09, keyDown: true) // 0x09 is 'v'
-                pasteCommand?.flags = .maskCommand // Command key
+                // Command key down
+                let cmdDown = CGEvent(keyboardEventSource: nil, virtualKey: 0x37, keyDown: true)
+                cmdDown?.post(tap: .cghidEventTap)
                 
-                // Post the paste event
-                pasteCommand?.post(tap: .cghidEventTap)
-                pasteCommand?.type = .keyUp
-                pasteCommand?.post(tap: .cghidEventTap)
+                // V key down
+                let vKeyDown = CGEvent(keyboardEventSource: nil, virtualKey: 0x09, keyDown: true)
+                vKeyDown?.flags = .maskCommand
+                vKeyDown?.post(tap: .cghidEventTap)
+                
+                // V key up
+                let vKeyUp = CGEvent(keyboardEventSource: nil, virtualKey: 0x09, keyDown: false)
+                vKeyUp?.flags = .maskCommand
+                vKeyUp?.post(tap: .cghidEventTap)
+                
+                // Command key up
+                let cmdUp = CGEvent(keyboardEventSource: nil, virtualKey: 0x37, keyDown: false)
+                cmdUp?.post(tap: .cghidEventTap)
+                
+                print("Paste command sent")
+                
+                // Verify paste operation
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    if let newClipboardText = NSPasteboard.general.string(forType: .string),
+                       newClipboardText == text {
+                        print("Paste operation appears successful")
+                    } else {
+                        print("Paste verification failed")
+                    }
+                }
             }
         }
     }
