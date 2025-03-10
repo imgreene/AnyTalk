@@ -24,7 +24,8 @@
 5. Grant microphone permissions when prompted
 
 ## What's New
-- Initial release
+- Updated application icon with improved design
+- Enhanced Windows installer experience
 - Voice-to-text dictation using OpenAI's Whisper API
 - Global hotkey support
   - macOS: ⌘⌥ (Command+Option)

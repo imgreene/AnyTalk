@@ -28,7 +28,7 @@ AnyTalk is a desktop application that provides voice-to-text dictation using Ope
 ## Download and Install
 
 ### macOS
-1. Download `AnyTalk-macOS.zip` from the [releases page](https://github.com/yourusername/anytalk/releases)
+1. Download `AnyTalk-macOS.zip` from the [releases page](https://github.com/imgreene/AnyTalk/releases/tag/v1.0.1)
 2. Unzip the file
 3. Move AnyTalk.app to your Applications folder
 4. Launch AnyTalk
@@ -37,7 +37,7 @@ AnyTalk is a desktop application that provides voice-to-text dictation using Ope
    - Click "Open Anyway"
 
 ### Windows
-1. Download `AnyTalk-Windows-Setup.exe` from the [releases page](https://github.com/yourusername/anytalk/releases)
+1. Download `AnyTalk-Windows-Setup.exe` from the [releases page](https://github.com/imgreene/AnyTalk/releases/tag/v1.0.1)
 2. Run the installer
 3. Follow the installation wizard
 
