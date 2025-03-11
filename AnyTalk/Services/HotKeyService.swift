@@ -46,14 +46,11 @@ class HotKeyService {
         // Debug output
         print("Registering hotkey with modifiers: \(modifiers), keyCode: \(keyCode)")
         
-        // If we're using modifier-only hotkey
-        if keyCode == 0 && modifiers > 0 {
-            modifierOnlyHotkey = true
+        if modifiers == 0 {
+            // If no modifiers, set up modifier-only hotkey monitoring
             setupModifierOnlyHotkey(modifiers: modifiers)
             return
         }
-        
-        modifierOnlyHotkey = false
         
         // Create a unique ID
         hotKeyID = EventHotKeyID(signature: OSType(fourCharCodeFrom("AnyT")), id: 1)
@@ -74,23 +71,25 @@ class HotKeyService {
         
         // Register the hotkey
         let status = RegisterEventHotKey(keyCode, 
-                                        modifiers, 
-                                        hotKeyID, 
-                                        GetApplicationEventTarget(), 
-                                        0, 
-                                        &hotKeyRef)
+                                       modifiers, 
+                                       hotKeyID, 
+                                       GetApplicationEventTarget(), 
+                                       0, 
+                                       &hotKeyRef)
         
         if status != noErr {
             print("Failed to register hotkey: \(status)")
+            // If registration fails, try setting up modifier-only hotkey
+            setupModifierOnlyHotkey(modifiers: modifiers)
         } else {
             print("Successfully registered hotkey")
+            
+            // Listen for hotkey press
+            NotificationCenter.default.addObserver(self, 
+                                                 selector: #selector(hotKeyPressed), 
+                                                 name: Notification.Name("HotKeyPressed"), 
+                                                 object: nil)
         }
-        
-        // Listen for hotkey press
-        NotificationCenter.default.addObserver(self, 
-                                              selector: #selector(hotKeyPressed), 
-                                              name: Notification.Name("HotKeyPressed"), 
-                                              object: nil)
     }
     
     private func setupModifierOnlyHotkey(modifiers: UInt32) {

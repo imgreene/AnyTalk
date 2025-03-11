@@ -6,7 +6,10 @@ struct SettingsView: View {
     @State private var selectedMicrophone: String
     @State private var apiKey: String
     @State private var selectedLanguage: String
+    @State private var availableMicrophones: [String] = []
     @Environment(\.colorScheme) private var colorScheme
+    @State private var confirmingClearHistory = false
+    @State private var clearHistoryTimer: Timer?
     
     init() {
         let initialMicrophone = SettingsManager.shared.selectedMicrophone ?? "Default"
@@ -21,41 +24,89 @@ struct SettingsView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                // Header
-                Text("Settings")
-                    .font(.system(size: 28, weight: .bold))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
-                    .padding(.top, 8)
-                    .opacity(0.0) // Hide this title since it's shown in the tab bar
-                
                 // Hotkey Settings
-                SettingsCard(title: "Recording Hotkey", icon: "keyboard") {
-                    Button(action: {
-                        showingHotkeyRecorder.toggle()
-                    }) {
-                        HStack {
-                            Text("Current shortcut")
-                                .foregroundColor(.primary)
-                            Spacer()
+                SettingsCard(title: "Recording Hotkey", icon: "keyboard", isInteractive: true) {
+                    HStack {
+                        Text("Current shortcut")
+                            .foregroundColor(.primary)
+                        Spacer()
+                        
+                        HStack(spacing: 4) {
+                            Text(settingsManager.hotkeyDescription)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Color.secondary.opacity(0.2))
+                                .cornerRadius(6)
                             
-                            HStack(spacing: 4) {
-                                Text(settingsManager.hotkeyDescription)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 3)
-                                    .background(Color.secondary.opacity(0.2))
-                                    .cornerRadius(6)
-                                
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.secondary)
-                            }
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.secondary)
                         }
-                        .contentShape(Rectangle())
                     }
-                    .buttonStyle(PlainButtonStyle())
-                    .sheet(isPresented: $showingHotkeyRecorder) {
-                        HotkeyRecorderView(isPresented: $showingHotkeyRecorder)
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
+                }
+                .sheet(isPresented: $showingHotkeyRecorder) {
+                    HotkeyRecorderView(isPresented: $showingHotkeyRecorder)
+                }
+                .padding(.top, 12) // Add a small top padding to the first card
+                
+                // Recording Mode Settings
+                SettingsCard(title: "Recording Mode", icon: "record.circle") {
+                    VStack(spacing: 12) {
+                        Button(action: {
+                            settingsManager.isToggleMode = false
+                        }) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Press and Hold")
+                                        .font(.system(size: 15, weight: .semibold))
+                                    Text("Hold key combination to record, release to stop")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                if !settingsManager.isToggleMode {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(!settingsManager.isToggleMode ? 
+                                        Color.blue.opacity(0.1) : 
+                                        Color.secondary.opacity(0.05))
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+
+                        Button(action: {
+                            settingsManager.isToggleMode = true
+                        }) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Press to Toggle")
+                                        .font(.system(size: 15, weight: .semibold))
+                                    Text("Press once to start, press again to stop")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                if settingsManager.isToggleMode {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(settingsManager.isToggleMode ? 
+                                        Color.blue.opacity(0.1) : 
+                                        Color.secondary.opacity(0.05))
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
                 
@@ -64,12 +115,13 @@ struct SettingsView: View {
                     Picker("Input Device", selection: $selectedMicrophone) {
                         Text("Default Device").tag("Default")
                         
-                        if !AudioRecorderService.shared.availableMicrophones.isEmpty {
+                        let devices = AudioRecorderService.shared.availableMicrophones
+                        if !devices.isEmpty {
                             Divider()
                                 .padding(.vertical, 2)
                         }
                         
-                        ForEach(AudioRecorderService.shared.availableMicrophones, id: \.self) { mic in
+                        ForEach(devices, id: \.self) { mic in
                             Text(mic).tag(mic)
                         }
                     }
@@ -135,12 +187,72 @@ struct SettingsView: View {
                 
                 // App Settings
                 SettingsCard(title: "App Options", icon: "gearshape.fill") {
-                    Toggle("Launch at Login", isOn: $settingsManager.launchAtLogin)
+                    VStack(spacing: 12) {
+                        Toggle(isOn: $settingsManager.launchAtLogin) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Launch at Login")
+                                    .font(.system(size: 13))
+                                Text("Start AnyTalk automatically when you log in")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
                         .onChange(of: settingsManager.launchAtLogin) { newValue in
                             settingsManager.setLaunchAtLogin(enabled: newValue)
                         }
+                        
+                        Divider()
+                        
+                        Toggle(isOn: $settingsManager.playSounds) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Play Sounds")
+                                    .font(.system(size: 13))
+                                Text("Audio feedback when recording starts/stops")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
                 
+                // Clear History
+                SettingsCard(title: "Clear History", icon: "trash.fill") {
+                    VStack(spacing: 12) {
+                        Button(action: {
+                            if confirmingClearHistory {
+                                // Actually clear the history
+                                HistoryManager.shared.clearAllEntries()
+                                confirmingClearHistory = false
+                                clearHistoryTimer?.invalidate()
+                            } else {
+                                confirmingClearHistory = true
+                                // Reset after 3 seconds
+                                clearHistoryTimer?.invalidate()
+                                clearHistoryTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
+                                    confirmingClearHistory = false
+                                }
+                            }
+                        }) {
+                            Text(confirmingClearHistory ? "Confirm Clear History" : "Clear AnyTalk History")
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .background(confirmingClearHistory ? Color.red : Color.red.opacity(0.8))
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                        
+                        if !confirmingClearHistory {
+                            Text("This will permanently delete all transcription history")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+
                 // App Info
                 VStack(spacing: 4) {
                     Text("AnyTalk")
@@ -155,6 +267,29 @@ struct SettingsView: View {
             }
             .padding(.bottom, 20)
         }
+        .onAppear {
+            NotificationCenter.default.addObserver(
+                forName: Notification.Name("OpenHotkeyRecorder"),
+                object: nil,
+                queue: .main
+            ) { _ in
+                showingHotkeyRecorder = true
+            }
+            
+            // Listen for audio device changes
+            NotificationCenter.default.addObserver(
+                forName: Notification.Name("AudioDevicesChanged"),
+                object: nil,
+                queue: .main
+            ) { _ in
+                // Force refresh the picker
+                let devices = AudioRecorderService.shared.availableMicrophones
+                if !devices.contains(selectedMicrophone) {
+                    selectedMicrophone = "Default"
+                    settingsManager.selectedMicrophone = "Default"
+                }
+            }
+        }
     }
 }
 
@@ -163,11 +298,14 @@ struct SettingsCard<Content: View>: View {
     let title: String
     let icon: String
     let content: Content
+    let isInteractive: Bool
     @Environment(\.colorScheme) private var colorScheme
+    @State private var isPressed = false
     
-    init(title: String, icon: String, @ViewBuilder content: () -> Content) {
+    init(title: String, icon: String, isInteractive: Bool = false, @ViewBuilder content: () -> Content) {
         self.title = title
         self.icon = icon
+        self.isInteractive = isInteractive
         self.content = content()
     }
     
@@ -194,24 +332,44 @@ struct SettingsCard<Content: View>: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(colorScheme == .dark ? Color(.windowBackgroundColor).opacity(0.7) : Color(.controlBackgroundColor))
+                .fill(colorScheme == .dark 
+                    ? Color(.windowBackgroundColor).opacity(isPressed ? 0.5 : 0.7)
+                    : Color(.controlBackgroundColor).opacity(isPressed ? 0.7 : 1))
                 .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.05), radius: 1, x: 0, y: 1)
         )
         .padding(.horizontal)
+        .if(isInteractive) { view in
+            view
+                .onHover { hovering in
+                    if hovering {
+                        NSCursor.pointingHand.set()
+                    } else {
+                        NSCursor.arrow.set()
+                    }
+                }
+                .simultaneousGesture(
+                    TapGesture()
+                        .onEnded {
+                            NotificationCenter.default.post(name: Notification.Name("OpenHotkeyRecorder"), object: nil)
+                        }
+                )
+                .pressAction(onPress: { pressed in
+                    withAnimation(.easeInOut(duration: 0.1)) {
+                        isPressed = pressed
+                    }
+                })
+        }
     }
 }
 
 struct HotkeyRecorderView: View {
     @Binding var isPresented: Bool
     @ObservedObject private var settingsManager = SettingsManager.shared
-    @State private var modifiers: NSEvent.ModifierFlags = []
-    @State private var keyCode: UInt16 = 0
-    @State private var isRecording = false
-    @State private var allowModifiersOnly = false
-    @State private var lastFlagsChanged = Date()
-    @State private var modifiersStable = false
-    @State private var monitorHandler: Any?
+    @State private var currentModifiers: NSEvent.ModifierFlags = []
+    @State private var savedModifiers: NSEvent.ModifierFlags = []
     @Environment(\.colorScheme) private var colorScheme
+    @State private var monitorHandler: Any?
+    @State private var isRecordingNew: Bool = false
     
     var body: some View {
         VStack(spacing: 24) {
@@ -225,57 +383,23 @@ struct HotkeyRecorderView: View {
                 Text("Record New Hotkey")
                     .font(.system(size: 20, weight: .bold))
                 
-                Text("Press the key combination you want to use")
-                    .font(.system(size: 14))
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            
-            // Display current hotkey
-            VStack {
-                Text(isRecording ? "Recording..." : (modifiers.isEmpty && keyCode == 0) ? "No hotkey set" : hotkeyDescription)
-                    .font(.system(size: 18, weight: isRecording ? .bold : .medium))
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 16)
-                    .frame(height: 50)
+                // Hotkey display
+                Text(hotkeyDescription)
+                    .font(.system(size: 24, weight: .medium))
+                    .padding()
                     .frame(maxWidth: .infinity)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(isRecording 
-                                ? Color.blue.opacity(0.1)
-                                : (colorScheme == .dark 
-                                    ? Color(.textBackgroundColor).opacity(0.5)
-                                    : Color(.controlBackgroundColor)))
+                            .fill(Color(NSColor.textBackgroundColor))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .strokeBorder(
-                                        isRecording 
-                                            ? Color.blue.opacity(0.5)
-                                            : Color.secondary.opacity(0.2),
-                                        lineWidth: 1
-                                    )
+                                    .strokeBorder(Color.secondary.opacity(0.2), lineWidth: 1)
                             )
                     )
-                    .animation(.easeInOut(duration: 0.2), value: isRecording)
-            }
-            .padding(.horizontal)
-            
-            // Settings
-            VStack(alignment: .leading, spacing: 8) {
-                Toggle("Allow modifier keys only (e.g., ⌘⌥)", isOn: $allowModifiersOnly)
-                    .onChange(of: allowModifiersOnly) { newValue in
-                        if newValue {
-                            // When enabling modifier-only mode, reset the key code
-                            keyCode = 0
-                        }
-                    }
                 
-                if allowModifiersOnly {
-                    Text("Hold the modifier keys for 1 second to set")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                        .padding(.top, 4)
-                }
+                Text("Modifier keys only")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
             }
             .padding(.horizontal)
             
@@ -291,38 +415,20 @@ struct HotkeyRecorderView: View {
                 .buttonStyle(SecondaryButtonStyle())
                 
                 Button("Save") {
-                    // If using modifiers only and allowModifiersOnly is true, set keyCode to 0
-                    if allowModifiersOnly && modifiers.rawValue > 0 {
-                        settingsManager.setHotkey(modifiers: modifiers, keyCode: 0)
-                    } else {
-                        settingsManager.setHotkey(modifiers: modifiers, keyCode: keyCode)
-                    }
+                    settingsManager.setHotkey(modifiers: NSEvent.ModifierFlags(rawValue: savedModifiers.rawValue), keyCode: 0)
                     cleanupMonitor()
                     isPresented = false
                 }
                 .keyboardShortcut(.defaultAction)
                 .buttonStyle(PrimaryButtonStyle())
-                .disabled(modifiers.isEmpty || (!allowModifiersOnly && keyCode == 0))
+                .disabled(savedModifiers.isEmpty)
             }
             .padding()
         }
         .padding()
         .frame(width: 380, height: 360)
         .onAppear {
-            // Load current settings
-            let currentModifiers = NSEvent.ModifierFlags(rawValue: settingsManager.hotkeyModifiers)
-            modifiers = currentModifiers
-            keyCode = settingsManager.hotkeyKeyCode
-            
-            // Check if current hotkey is modifier-only
-            allowModifiersOnly = (keyCode == 0 && modifiers.rawValue > 0)
-            
             setupKeyMonitor()
-            
-            // Start recording after a short delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                isRecording = true
-            }
         }
         .onDisappear {
             cleanupMonitor()
@@ -330,78 +436,59 @@ struct HotkeyRecorderView: View {
     }
     
     private func setupKeyMonitor() {
-        // Clean up any existing monitor
         cleanupMonitor()
         
-        // Set up a timer to check if modifiers have been stable
-        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
-            if allowModifiersOnly && isRecording && modifiers.rawValue > 0 {
-                if Date().timeIntervalSince(lastFlagsChanged) > 1.0 && !modifiersStable {
-                    // Modifiers have been stable for 1 second
-                    modifiersStable = true
-                    isRecording = false
-                    // Keep keyCode as 0 for modifier-only hotkey
-                    keyCode = 0
-                    print("Modifier-only hotkey set: \(modifiers.rawValue)")
-                }
+        monitorHandler = NSEvent.addLocalMonitorForEvents(matching: [.flagsChanged]) { event in
+            let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            
+            // If starting a new recording
+            if !flags.isEmpty && !isRecordingNew {
+                isRecordingNew = true
+                savedModifiers = []
             }
             
-            // Stop the timer if we're not recording anymore
-            if !isRecording {
-                timer.invalidate()
+            // Update both current and saved modifiers
+            currentModifiers = flags
+            if !flags.isEmpty {
+                // Combine the new flags with existing ones instead of replacing
+                savedModifiers = savedModifiers.union(flags)
             }
-        }
-        
-        // Set up the event monitor
-        monitorHandler = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .flagsChanged]) { event in
-            if isRecording {
-                if event.type == .flagsChanged {
-                    // Update modifiers
-                    modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-                    lastFlagsChanged = Date()
-                    modifiersStable = false
-                    print("Flags changed: \(modifiers.rawValue)")
-                } else if event.type == .keyDown {
-                    // Update key code and modifiers
-                    modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-                    keyCode = event.keyCode
-                    isRecording = false
-                    print("Key down: keyCode=\(keyCode), modifiers=\(modifiers.rawValue)")
-                }
+            
+            // Only clear saved modifiers if all keys are released
+            if flags.isEmpty {
+                isRecordingNew = false
+                currentModifiers = savedModifiers
             }
-            return event
-        }
-    }
-    
-    private func cleanupMonitor() {
-        if let handler = monitorHandler {
-            NSEvent.removeMonitor(handler)
-            monitorHandler = nil
+            
+            return nil
         }
     }
     
     var hotkeyDescription: String {
         var description = ""
+        let modFlags = savedModifiers
         
-        if modifiers.contains(.command) {
+        if modFlags.contains(.command) {
             description += "⌘"
         }
-        if modifiers.contains(.option) {
+        if modFlags.contains(.option) {
             description += "⌥"
         }
-        if modifiers.contains(.control) {
+        if modFlags.contains(.control) {
             description += "⌃"
         }
-        if modifiers.contains(.shift) {
+        if modFlags.contains(.shift) {
             description += "⇧"
         }
         
-        // Add key character
-        if keyCode > 0, let char = KeyCodeMap.map[keyCode] {
-            description += char
+        return description.isEmpty ? "Press keys" : description
+    }
+    
+    private func cleanupMonitor() {
+        if let monitorHandler = monitorHandler {
+            NSEvent.removeMonitor(monitorHandler)
+            self.monitorHandler = nil
         }
-        
-        return description.isEmpty ? "Not Set" : description
     }
 }
 
@@ -453,4 +540,40 @@ struct SettingsView_Previews: PreviewProvider {
             .preferredColorScheme(.dark)
             .previewDisplayName("Dark Mode")
     }
-} 
+}
+
+// Add this extension to support press detection
+extension View {
+    func pressAction(onPress: @escaping (_ isPressed: Bool) -> Void) -> some View {
+        modifier(PressActionModifier(onPress: onPress))
+    }
+}
+
+struct PressActionModifier: ViewModifier {
+    let onPress: (_ isPressed: Bool) -> Void
+    
+    func body(content: Content) -> some View {
+        content
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in
+                        onPress(true)
+                    }
+                    .onEnded { _ in
+                        onPress(false)
+                    }
+            )
+    }
+}
+
+// Add this extension to support conditional modifiers
+extension View {
+    @ViewBuilder
+    func `if`<Transform: View>(_ condition: Bool, transform: (Self) -> Transform) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
+    }
+}

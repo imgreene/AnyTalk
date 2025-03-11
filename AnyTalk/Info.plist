@@ -34,5 +34,7 @@
 	<string>NSApplication</string>
 	<key>Privacy - Accessibility Usage Description</key>
 	<string>AnyTalk needs accessibility access to paste text at the cursor position.</string>
+	<key>NSInputMonitoringUsageDescription</key>
+	<string>AnyTalk needs to monitor input to properly paste text at the cursor position.</string>
 </dict>
 </plist>

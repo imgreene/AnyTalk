@@ -37,7 +37,6 @@ struct KeyCodeMap {
         33: "[",
         34: "I",
         35: "P",
-        36: "Return",
         37: "L",
         38: "J",
         39: "'",
@@ -49,19 +48,6 @@ struct KeyCodeMap {
         45: "N",
         46: "M",
         47: ".",
-        48: "Tab",
-        49: "Space",
-        50: "`",
-        51: "Delete",
-        53: "Escape",
-        55: "Command",
-        56: "Shift",
-        57: "Caps Lock",
-        58: "Option",
-        59: "Control",
-        60: "Right Shift",
-        61: "Right Option",
-        62: "Right Control",
-        63: "Function"
+        50: "`"
     ]
 } 

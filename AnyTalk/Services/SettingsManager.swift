@@ -13,6 +13,8 @@ class SettingsManager: ObservableObject {
     private let apiKeyKey = "apiKey"
     private let isRecordingKey = "isRecording"
     private let preferredLanguageKey = "preferredLanguage"
+    private let isToggleModeKey = "isToggleMode"
+    private let playSoundsKey = "playSounds"
     
     // Default values
     private let defaultHotkeyModifiers: UInt = NSEvent.ModifierFlags.command.rawValue | NSEvent.ModifierFlags.option.rawValue
@@ -33,6 +35,16 @@ class SettingsManager: ObservableObject {
     @Published var selectedMicrophone: String?
     @Published private(set) var apiKey: String = ""
     @Published var preferredLanguage: String = "en"
+    @Published var isToggleMode: Bool = false {
+        didSet {
+            defaults.set(isToggleMode, forKey: isToggleModeKey)
+        }
+    }
+    @Published var playSounds: Bool = true {
+        didSet {
+            defaults.set(playSounds, forKey: playSoundsKey)
+        }
+    }
     
     // Available languages (code, name) for selection
     let availableLanguages = [
@@ -67,9 +79,9 @@ class SettingsManager: ObservableObject {
             description += "⇧"
         }
         
-        // Add key character
+        // Add key character only if it's not a modifier-only hotkey
         if hotkeyKeyCode > 0, let char = KeyCodeMap.map[hotkeyKeyCode] {
-            description += char
+            description += (description.isEmpty ? "" : "+") + char.uppercased()
         }
         
         return description.isEmpty ? "Not Set" : description
@@ -83,6 +95,10 @@ class SettingsManager: ObservableObject {
         if apiKey.isEmpty {
             defaults.set("", forKey: apiKeyKey)
         }
+        
+        // Add this to your initialization
+        self.isToggleMode = defaults.bool(forKey: isToggleModeKey)
+        self.playSounds = defaults.object(forKey: playSoundsKey) as? Bool ?? true
     }
     
     private func loadSavedValues() {
@@ -110,8 +126,6 @@ class SettingsManager: ObservableObject {
         } else {
             hotkeyKeyCode = UInt16(storedKeyCode)
         }
-        
-        print("Loaded hotkey settings - modifiers: \(hotkeyModifiers), keyCode: \(hotkeyKeyCode)")
         
         // Load launch at login setting
         launchAtLogin = defaults.bool(forKey: launchAtLoginKey)

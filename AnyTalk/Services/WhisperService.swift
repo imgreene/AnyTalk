@@ -53,7 +53,6 @@ class WhisperService {
         }
         
         // Set a lower temperature for more deterministic results
-        // This helps reduce random outputs for short/silent recordings
         httpBody.append("--\(boundary)\r\n".data(using: .utf8)!)
         httpBody.append("Content-Disposition: form-data; name=\"temperature\"\r\n\r\n".data(using: .utf8)!)
         httpBody.append("0.3\r\n".data(using: .utf8)!)

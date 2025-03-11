@@ -1,13 +1,19 @@
-import Cocoa
+
+import Foundation
 import SwiftUI
+import AppKit
+import Cocoa
 
 class AppDelegate: NSObject, NSApplicationDelegate {
-    var statusBarItem: NSStatusItem!
-    var popover: NSPopover!
-    var contentView: ContentView!
-    var hotKeyService: HotKeyService!
-    var isRecording = false
-    var recordingStartTime: Date?
+    private var statusItem: NSStatusItem?
+    private var popover: NSPopover?
+    private var isRecording = false
+    private var recordingStartTime: Date?
+    private var contentView: ContentView?
+    private var hotKeyService: HotKeyService?
+    
+    // Notification observer for recording state changes
+    private var recordingStateObserver: NSObjectProtocol?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupPopover()
@@ -39,9 +45,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func setupMenuBar() {
-        statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         
-        if let button = statusBarItem.button {
+        if let button = statusItem?.button {
             button.image = NSImage(systemSymbolName: "mic.fill", accessibilityDescription: "AnyTalk")
             button.action = #selector(togglePopover)
         }
@@ -50,24 +56,37 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: "Open AnyTalk", action: #selector(openPopover), keyEquivalent: "o"))
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Start Dictation", action: #selector(startDictation), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Stop Dictation", action: #selector(stopDictation), keyEquivalent: ""))
-        menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q"))
         
-        statusBarItem.menu = menu
+        statusItem?.menu = menu
     }
     
     func setupHotKey() {
         hotKeyService = HotKeyService(
             startDictationCallback: { [weak self] in
-                self?.startDictation()
+                // Check if toggle mode is enabled
+                if SettingsManager.shared.isToggleMode {
+                    // In toggle mode, we toggle the recording state
+                    if self?.isRecording == true {
+                        self?.stopDictation()
+                    } else {
+                        self?.startDictation()
+                    }
+                } else {
+                    // In press-and-hold mode, just start recording
+                    self?.startDictation()
+                }
             },
             stopDictationCallback: { [weak self] in
-                self?.stopDictation()
+                // Only stop recording in press-and-hold mode
+                if !SettingsManager.shared.isToggleMode {
+                    self?.stopDictation()
+                }
             }
         )
-        hotKeyService.registerDefaultHotKey()
+        
+        // Safely call registerDefaultHotKey
+        hotKeyService?.registerDefaultHotKey()
         
         // Debug output
         let settings = SettingsManager.shared
@@ -77,20 +96,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Actions
     
     @objc func togglePopover() {
-        if let button = statusBarItem.button {
-            if popover.isShown {
-                popover.performClose(nil)
-            } else {
-                NSApp.activate(ignoringOtherApps: true)
-                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-                popover.contentViewController?.view.window?.makeKey()
+        if let button = statusItem?.button {
+            if let popover = popover {
+                if popover.isShown {
+                    popover.performClose(nil)
+                } else {
+                    NSApp.activate(ignoringOtherApps: true)
+                    popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                    popover.contentViewController?.view.window?.makeKey()
+                }
             }
         }
     }
     
     @objc func openPopover() {
-        if !popover.isShown {
-            if let button = statusBarItem.button {
+        if let popover = popover, !popover.isShown {
+            if let button = statusItem?.button {
                 NSApp.activate(ignoringOtherApps: true)
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
                 popover.contentViewController?.view.window?.makeKey()
@@ -99,12 +120,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func updateMenuBarIcon() {
-        if let button = statusBarItem.button {
-            // Always use the same mic.fill icon, but change its color when recording
+        if let button = statusItem?.button {
             let icon = NSImage(systemSymbolName: "mic.fill", accessibilityDescription: "AnyTalk")
             button.image = icon
             
-            // Change the tint color based on recording state
             if isRecording {
                 button.contentTintColor = NSColor.systemOrange
             } else {
@@ -112,11 +131,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             
             // Enable/disable menu items based on recording state
-            if let menu = statusBarItem.menu {
-                if let startItem = menu.item(withTitle: "Start Dictation"), let stopItem = menu.item(withTitle: "Stop Dictation") {
-                    startItem.isEnabled = !isRecording
-                    stopItem.isEnabled = isRecording
-                }
+            if let menu = statusItem?.menu,
+               let startItem = menu.item(withTitle: "Start Dictation"),
+               let stopItem = menu.item(withTitle: "Stop Dictation") {
+                startItem.isEnabled = !isRecording
+                stopItem.isEnabled = isRecording
             }
         }
     }
@@ -159,8 +178,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         print("Stopping dictation")
         
+        // Calculate recording duration
+        let recordingDuration = recordingStartTime.map { Date().timeIntervalSince($0) } ?? 0
+        
         // Check if recording was too short (less than 0.5 second)
-        if let startTime = recordingStartTime, Date().timeIntervalSince(startTime) < 0.5 {
+        if recordingDuration < 0.5 {
             print("Recording too short, cancelling")
             
             // Reset recording state
@@ -177,9 +199,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             notification.informativeText = "Recording was too short and has been cancelled."
             NSUserNotificationCenter.default.deliver(notification)
             
-            // Clear clipboard to prevent any accidental pasting
-            NSPasteboard.general.clearContents()
-            
             return
         }
         
@@ -190,6 +209,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Update menubar icon to reflect recording state
         updateMenuBarIcon()
         
+        // Save the original clipboard content
+        let pasteboard = NSPasteboard.general
+        let originalContent = pasteboard.string(forType: .string)
+        
         // Stop recording and process audio
         AudioRecorderService.shared.stopRecording { [weak self] url in
             guard let url = url else { return }
@@ -198,31 +221,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             WhisperService.shared.transcribe(audioURL: url) { result in
                 switch result {
                 case .success(let transcription):
-                    // Check if transcription has valid content
-                    if self?.isValidTranscription(transcription) == false {
-                        print("Transcription content invalid, ignoring: \(transcription)")
-                        
-                        // Show notification that transcription was ignored
-                        let notification = NSUserNotification()
-                        notification.title = "Transcription Ignored"
-                        notification.informativeText = "No valid speech detected"
-                        NSUserNotificationCenter.default.deliver(notification)
-                        
-                        return
-                    }
+                    // Save to history with duration
+                    HistoryManager.shared.addEntry(text: transcription, duration: recordingDuration)
                     
-                    // Save to history
-                    HistoryManager.shared.addEntry(text: transcription)
-                    
-                    // Copy to clipboard
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(transcription, forType: .string)
+                    // Save the original clipboard content
+                    let pasteboard = NSPasteboard.general
+                    let originalContent = pasteboard.string(forType: .string)
                     
                     // Type the text at the current cursor position
                     self?.pasteTextAtCursor(transcription)
                     
-                    // Play sound to indicate completion
-                    NSSound(named: "Glass")?.play()
+                    // Play sound to indicate completion only if sounds are enabled
+                    if SettingsManager.shared.playSounds {
+                        NSSound(named: "Glass")?.play()
+                    }
                     
                     // Show notification
                     let notification = NSUserNotification()
@@ -230,9 +242,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     notification.informativeText = "Text inserted at cursor position"
                     NSUserNotificationCenter.default.deliver(notification)
                     
-                    // Update UI if needed
-                    DispatchQueue.main.async {
-                        self?.contentView.updateForNewTranscription()
+                    // Restore the original clipboard content after a longer delay
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        if let originalContent = originalContent {
+                            pasteboard.clearContents()
+                            pasteboard.setString(originalContent, forType: .string)
+                        }
                     }
                     
                 case .failure(let error):
@@ -242,6 +257,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     notification.title = "Transcription Failed"
                     notification.informativeText = error.localizedDescription
                     NSUserNotificationCenter.default.deliver(notification)
+                    
+                    // Restore the original clipboard content
+                    if let originalContent = originalContent {
+                        pasteboard.clearContents()
+                        pasteboard.setString(originalContent, forType: .string)
+                    }
                 }
             }
         }
@@ -256,62 +277,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func pasteTextAtCursor(_ text: String) {
-        // First ensure the text is in the clipboard
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(text, forType: .string)
+        // Create a pasteboard instance
+        let pasteboard = NSPasteboard.general
         
-        // Verify clipboard content
-        guard let clipboardText = NSPasteboard.general.string(forType: .string) else {
-            print("Failed to set clipboard text")
-            return
-        }
+        // Prepare the text with smart space handling
+        let trimmedText = text.trimmingCharacters(in: .whitespaces)
+        let textToInsert = trimmedText + " " // Add space at the end instead of beginning
         
-        print("Text successfully copied to clipboard: \(clipboardText)")
+        // Set our transcribed text
+        pasteboard.clearContents()
+        pasteboard.setString(textToInsert, forType: .string)
         
-        // Get the frontmost application
-        guard let frontmostApp = NSWorkspace.shared.frontmostApplication else {
-            print("No frontmost application found")
-            return
-        }
-        
-        print("Attempting to paste in app: \(frontmostApp.localizedName ?? "Unknown")")
-        
-        // Create a sequence of events
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            // Ensure we're in the right app
-            frontmostApp.activate(options: .activateIgnoringOtherApps)
+        // Create and post the paste event
+        if let source = CGEventSource(stateID: .combinedSessionState) {
+            // Command down
+            let cmdDown = CGEvent(keyboardEventSource: source, virtualKey: 0x37, keyDown: true)
+            cmdDown?.flags = .maskCommand
             
-            // Wait for app activation
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                // Command key down
-                let cmdDown = CGEvent(keyboardEventSource: nil, virtualKey: 0x37, keyDown: true)
-                cmdDown?.post(tap: .cghidEventTap)
-                
-                // V key down
-                let vKeyDown = CGEvent(keyboardEventSource: nil, virtualKey: 0x09, keyDown: true)
-                vKeyDown?.flags = .maskCommand
-                vKeyDown?.post(tap: .cghidEventTap)
-                
-                // V key up
-                let vKeyUp = CGEvent(keyboardEventSource: nil, virtualKey: 0x09, keyDown: false)
-                vKeyUp?.flags = .maskCommand
-                vKeyUp?.post(tap: .cghidEventTap)
-                
-                // Command key up
-                let cmdUp = CGEvent(keyboardEventSource: nil, virtualKey: 0x37, keyDown: false)
-                cmdUp?.post(tap: .cghidEventTap)
-                
-                print("Paste command sent")
-                
-                // Verify paste operation
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    if let newClipboardText = NSPasteboard.general.string(forType: .string),
-                       newClipboardText == text {
-                        print("Paste operation appears successful")
-                    } else {
-                        print("Paste verification failed")
-                    }
-                }
+            // V down/up
+            let vDown = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: true)
+            vDown?.flags = .maskCommand
+            let vUp = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: false)
+            vUp?.flags = .maskCommand
+            
+            // Command up
+            let cmdUp = CGEvent(keyboardEventSource: source, virtualKey: 0x37, keyDown: false)
+            
+            // Post all events in sequence
+            [cmdDown, vDown, vUp, cmdUp].forEach { event in
+                event?.post(tap: .cgAnnotatedSessionEventTap)
+                usleep(1000) // 1ms delay
             }
         }
     }
