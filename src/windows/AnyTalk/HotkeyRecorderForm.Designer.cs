@@ -2,6 +2,7 @@ namespace AnyTalk
 {
     partial class HotkeyRecorderForm
     {
+        // Keep only one declaration of components
         private System.ComponentModel.IContainer components = null;
         private Label lblInstructions;
         private Label lblCurrentKeys;
