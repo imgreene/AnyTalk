@@ -2,7 +2,7 @@
 
 AnyTalk is a macOS menubar application that provides voice-to-text dictation using OpenAI's Whisper API.
 
-Developed by <a href="https://X.com/GreeneChase" target="_blank">@GreeneChase</a>
+Developed by [@GreeneChase](https://X.com/GreeneChase)
 
 ## ⚠️ OpenAI API Key Required
 - Requires your OpenAI API key
