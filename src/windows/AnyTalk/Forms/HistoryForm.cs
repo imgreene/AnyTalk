@@ -5,7 +5,7 @@ namespace AnyTalk.Forms
 {
     public class HistoryForm : Form
     {
-        private ListView historyListView;
+        private ListView? historyListView;
         private readonly HistoryManager historyManager;
 
         public HistoryForm()
@@ -43,6 +43,8 @@ namespace AnyTalk.Forms
 
         private void LoadHistory()
         {
+            if (historyListView == null) return;
+            
             historyListView.Items.Clear();
             var entries = historyManager.GetEntries();
 
@@ -58,7 +60,7 @@ namespace AnyTalk.Forms
 
         private void CopySelectedText()
         {
-            if (historyListView.SelectedItems.Count > 0)
+            if (historyListView?.SelectedItems.Count > 0)
             {
                 var text = historyListView.SelectedItems[0].SubItems[1].Text;
                 Clipboard.SetText(text);
@@ -67,11 +69,24 @@ namespace AnyTalk.Forms
 
         private void DeleteSelectedEntry()
         {
-            if (historyListView.SelectedItems.Count > 0)
+            if (historyListView?.SelectedItems.Count > 0)
             {
-                var index = historyListView.SelectedItems[0].Index;
-                historyManager.DeleteEntry(index);
-                LoadHistory();
+                var entry = (TranscriptionEntry)historyListView.SelectedItems[0].Tag;
+                var entries = historyManager.GetEntries().ToList();
+                entries.Remove(entry);
+                
+                // Update the entries list
+                var json = System.Text.Json.JsonSerializer.Serialize(entries, new System.Text.Json.JsonSerializerOptions 
+                { 
+                    WriteIndented = true 
+                });
+                File.WriteAllText(Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "AnyTalk",
+                    "history.json"
+                ), json);
+
+                LoadHistory(); // Refresh the list
             }
         }
     }
