@@ -4,11 +4,16 @@ namespace AnyTalk
     {
         private System.ComponentModel.IContainer components = null;
         
-        // These fields should only be declared once
+        // Keep these declarations in Designer.cs
         private Label lblCurrentHotkey;
         private TextBox txtApiKey;
         private Button btnSaveApiKey;
         private Button btnRecordHotkey;
+        private ComboBox cboMicrophone;
+        private ComboBox cboLanguage;
+        private CheckBox chkLaunchAtStartup;
+        private TextBox txtHotKey;
+        private Button btnSave;
 
         protected override void Dispose(bool disposing)
         {

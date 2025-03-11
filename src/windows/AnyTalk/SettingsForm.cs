@@ -8,10 +8,12 @@ namespace AnyTalk
     public partial class SettingsForm : Form
     {
         private readonly Settings _settings;
-        private Label lblCurrentHotkey;
-        private TextBox txtApiKey;
-        private Button btnSaveApiKey;
-        private Button btnRecordHotkey;
+        
+        // Remove these duplicate declarations since they should only be in Designer.cs
+        // private Label lblCurrentHotkey;
+        // private TextBox txtApiKey;
+        // private Button btnSaveApiKey;
+        // private Button btnRecordHotkey;
 
         public SettingsForm()
         {
