@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/anytalk-logo.png" width="128" height="128" alt="AnyTalk Logo">
+</p>
+
 # AnyTalk
 
 AnyTalk is a macOS menubar application that provides voice-to-text dictation using OpenAI's Whisper API.
