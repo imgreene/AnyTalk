@@ -40,7 +40,7 @@ BTC: bc1qwjy57p4pq6n4qejrvq6yfjjq37unqen33ckakz
 - OpenAI API key
 
 ## Quick Start
-1. Download `AnyTalk-macOS.zip` from [releases](https://github.com/imgreene/AnyTalk/releases/tag/v1.0.1)
+1. Download `AnyTalk-macOS.zip` from [releases](https://github.com/imgreene/AnyTalk/releases/tag/v1.0.0)
 2. Move AnyTalk.app to Applications
 3. Launch AnyTalk
 4. Enter your [OpenAI API key](https://platform.openai.com/account/api-keys) in Settings
