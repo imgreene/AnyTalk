@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
-namespace AnyTalk
+namespace AnyTalk.Services
 {
     [Flags]
     public enum ModifierKeys : uint
