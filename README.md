@@ -6,7 +6,7 @@
 
 ⚠️ **Installation Options**
 
-**Option 1: Run Downloaded App**
+**Option 1: Run [Downloaded App](https://github.com/imgreene/AnyTalk/releases/tag/v1.0.0)**
 1. Double-click AnyTalk.app
 2. At "malicious software" warning → Click "Done"
 3. Open System Settings → Privacy & Security
