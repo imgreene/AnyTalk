@@ -11,25 +11,17 @@
    - Open System Preferences → Security & Privacy
    - Click "Open Anyway"
 
-### Windows
-1. Download `AnyTalk-Windows-Setup.exe` from the releases page
-2. Run the installer
-3. Follow the installation wizard
-
 ## First-Time Setup
 1. Get your OpenAI API key from https://platform.openai.com/account/api-keys
-2. Click the AnyTalk icon in the menubar (macOS) or system tray (Windows)
+2. Click the AnyTalk icon in the menubar
 3. Go to Settings
 4. Enter your OpenAI API key and click "Save"
 5. Grant microphone permissions when prompted
 
 ## What's New
 - Updated application icon with improved design
-- Enhanced Windows installer experience
 - Voice-to-text dictation using OpenAI's Whisper API
-- Global hotkey support
-  - macOS: ⌘⌥ (Command+Option)
-  - Windows: Ctrl+Alt
+- Global hotkey support (⌘⌥ Command+Option)
 - Automatic clipboard copy
 - Transcription history
 - Multi-language support
