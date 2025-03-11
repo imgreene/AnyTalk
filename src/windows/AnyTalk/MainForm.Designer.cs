@@ -1,27 +1,23 @@
 using AnyTalk.Services;
+using System.Windows.Forms;
 
 namespace AnyTalk
 {
     partial class MainForm
     {
         private System.ComponentModel.IContainer components = null;
-        private TableLayoutPanel settingsPanel;
-        private Label apiKeyLabel;
-        private Label hotkeyLabel;
-        private TextBox txtApiKey;
-        private Button btnSaveApiKey;
-        private Label lblCurrentHotkey;
-        private Button btnRecordHotkey;
-        private Label lblLanguage;
-        private ComboBox cboLanguage;
-        private CheckBox chkLaunchAtStartup;
-        private TabControl tabControl1;
-        private TabPage tabHome;
-        private TabPage tabHistory;
-        private TabPage tabSettings;
-        private Label lblTotalWordsLabel;
-        private Label lblTotalWords;
-        private ListView listHistory;
+        private Button btnRecord;
+        private Button btnStop;
+        private TableLayoutPanel mainPanel;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
 
         private void InitializeComponent()
         {
@@ -33,161 +29,36 @@ namespace AnyTalk
             this.StartPosition = FormStartPosition.CenterScreen;
             this.MinimumSize = new System.Drawing.Size(800, 600);
 
-            // Initialize tab control
-            tabControl1 = new TabControl();
-            tabControl1.Dock = DockStyle.Fill;
-
-            // Home tab
-            tabHome = new TabPage("Home");
-            lblTotalWordsLabel = new Label
-            {
-                Text = "Total Words Dictated",
-                AutoSize = true,
-                Font = new Font(Font.FontFamily, 12, FontStyle.Bold),
-                Location = new Point(20, 20)
-            };
-            lblTotalWords = new Label
-            {
-                Text = "0",
-                AutoSize = true,
-                Font = new Font(Font.FontFamily, 24, FontStyle.Bold),
-                Location = new Point(20, 50)
-            };
-            tabHome.Controls.Add(lblTotalWordsLabel);
-            tabHome.Controls.Add(lblTotalWords);
-
-            // History tab
-            tabHistory = new TabPage("History");
-            listHistory = new ListView
+            // Main panel
+            mainPanel = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                View = View.Details
-            };
-            listHistory.Columns.Add("Date", 150);
-            listHistory.Columns.Add("Text", 500);
-            tabHistory.Controls.Add(listHistory);
-
-            // Settings tab
-            tabSettings = new TabPage("Settings");
-            var settingsPanel = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                Padding = new Padding(20),
-                ColumnCount = 1,
-                RowCount = 6,
-                AutoSize = true
+                Padding = new Padding(10),
+                ColumnCount = 2,
+                RowCount = 2
             };
 
-            // API Key section
-            var apiKeyLabel = new Label
+            // Recording controls
+            btnRecord = new Button
             {
-                Text = "OpenAI API Key",
-                Font = new Font(Font.FontFamily, 10, FontStyle.Bold),
-                AutoSize = true
+                Text = "Start Recording",
+                Size = new Size(120, 30),
+                Enabled = true
             };
-            txtApiKey = new TextBox
-            {
-                Width = 400,
-                UseSystemPasswordChar = true
-            };
-            btnSaveApiKey = new Button
-            {
-                Text = "Save API Key",
-                Width = 100,
-                Height = 30
-            };
-            btnSaveApiKey.Click += (s, e) => SaveApiKey();
+            btnRecord.Click += btnRecord_Click;
 
-            // Hotkey section
-            var hotkeyLabel = new Label
+            btnStop = new Button
             {
-                Text = "Recording Hotkey",
-                Font = new Font(Font.FontFamily, 10, FontStyle.Bold),
-                AutoSize = true
+                Text = "Stop Recording",
+                Size = new Size(120, 30),
+                Enabled = false
             };
-            lblCurrentHotkey = new Label
-            {
-                Text = "Current: Ctrl+Alt",
-                AutoSize = true
-            };
-            btnRecordHotkey = new Button
-            {
-                Text = "Record New Hotkey",
-                Width = 150,
-                Height = 30
-            };
-            btnRecordHotkey.Click += (s, e) => ShowHotkeyRecorder();
+            btnStop.Click += btnStop_Click;
 
-            // Language section
-            lblLanguage = new Label
-            {
-                Text = "Preferred Language",
-                Font = new Font(Font.FontFamily, 10, FontStyle.Bold),
-                AutoSize = true
-            };
-            cboLanguage = new ComboBox
-            {
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                Width = 200
-            };
-            cboLanguage.Items.AddRange(new string[] { "English", "Spanish", "French", "German", "Italian", "Portuguese", "Dutch", "Russian", "Japanese", "Korean", "Chinese" });
-            cboLanguage.SelectedIndex = 0;
+            mainPanel.Controls.Add(btnRecord);
+            mainPanel.Controls.Add(btnStop);
 
-            // Launch at startup
-            chkLaunchAtStartup = new CheckBox
-            {
-                Text = "Launch at Startup",
-                AutoSize = true
-            };
-
-            // Add controls to settings panel
-            settingsPanel.Controls.Add(apiKeyLabel);
-            settingsPanel.Controls.Add(txtApiKey);
-            settingsPanel.Controls.Add(btnSaveApiKey);
-            settingsPanel.Controls.Add(hotkeyLabel);
-            settingsPanel.Controls.Add(lblCurrentHotkey);
-            settingsPanel.Controls.Add(btnRecordHotkey);
-            settingsPanel.Controls.Add(lblLanguage);
-            settingsPanel.Controls.Add(cboLanguage);
-            settingsPanel.Controls.Add(chkLaunchAtStartup);
-
-            tabSettings.Controls.Add(settingsPanel);
-
-            // Add tabs to tab control
-            tabControl1.TabPages.Add(tabHome);
-            tabControl1.TabPages.Add(tabHistory);
-            tabControl1.TabPages.Add(tabSettings);
-
-            // Add tab control to form
-            this.Controls.Add(tabControl1);
+            this.Controls.Add(mainPanel);
         }
-
-        private void SaveApiKey()
-        {
-            if (string.IsNullOrWhiteSpace(txtApiKey.Text))
-            {
-                MessageBox.Show("Please enter a valid API key.", "Invalid API Key", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            _settings.ApiKey = txtApiKey.Text;
-            SettingsManager.Instance.SaveSettings(_settings);
-            MessageBox.Show("API key saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        private void ShowHotkeyRecorder()
-        {
-            using (var hotkeyForm = new HotkeyRecorderForm())
-            {
-                if (hotkeyForm.ShowDialog() == DialogResult.OK)
-                {
-                    lblCurrentHotkey.Text = $"Current: {hotkeyForm.HotkeyString}";
-                    _settings.HotKey = hotkeyForm.HotkeyString;
-                    SettingsManager.Instance.SaveSettings(_settings);
-                }
-            }
-        }
-
-        // Dispose method removed - it should be in the main form class
     }
 }

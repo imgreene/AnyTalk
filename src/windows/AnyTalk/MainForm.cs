@@ -12,7 +12,7 @@ namespace AnyTalk
         private readonly AnyTalk.Audio.AudioRecorder _audioRecorder;
         private readonly WhisperService _whisperService;
         private readonly HotkeyManager _hotkeyManager;
-        private NotifyIcon _trayIcon;
+        private NotifyIcon? _trayIcon;
         private bool _isRecording;
 
         public MainForm()
@@ -30,7 +30,6 @@ namespace AnyTalk
                 StopRecording
             );
 
-            InitializeUI();
             SetupTrayIcon();
 
             // Hide main window on startup
@@ -43,7 +42,7 @@ namespace AnyTalk
         {
             _trayIcon = new NotifyIcon
             {
-                Icon = Properties.Resources.AppIcon,
+                Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath),
                 Visible = true,
                 Text = "AnyTalk"
             };
@@ -117,7 +116,7 @@ namespace AnyTalk
                 UpdateTrayIcon();
 
                 // Show notification
-                _trayIcon.ShowBalloonTip(
+                _trayIcon?.ShowBalloonTip(
                     2000,
                     "AnyTalk",
                     "Recording started",
@@ -152,7 +151,7 @@ namespace AnyTalk
         {
             try
             {
-                _trayIcon.ShowBalloonTip(
+                _trayIcon?.ShowBalloonTip(
                     2000,
                     "AnyTalk",
                     "Transcribing audio...",
@@ -166,7 +165,7 @@ namespace AnyTalk
                     if (!string.IsNullOrEmpty(result.Value))
                     {
                         Clipboard.SetText(result.Value);
-                        _trayIcon.ShowBalloonTip(
+                        _trayIcon?.ShowBalloonTip(
                             2000,
                             "AnyTalk",
                             "Transcription copied to clipboard",
@@ -176,7 +175,7 @@ namespace AnyTalk
                 }
                 else
                 {
-                    _trayIcon.ShowBalloonTip(
+                    _trayIcon?.ShowBalloonTip(
                         2000,
                         "AnyTalk",
                         $"Transcription failed: {result.ErrorMessage}",
@@ -186,7 +185,7 @@ namespace AnyTalk
             }
             catch (Exception ex)
             {
-                _trayIcon.ShowBalloonTip(
+                _trayIcon?.ShowBalloonTip(
                     2000,
                     "AnyTalk",
                     $"Transcription failed: {ex.Message}",
@@ -197,7 +196,6 @@ namespace AnyTalk
 
         private void UpdateUIState(bool isRecording)
         {
-            // Update UI elements based on recording state
             if (btnRecord != null) btnRecord.Enabled = !isRecording;
             if (btnStop != null) btnStop.Enabled = isRecording;
         }
@@ -211,8 +209,13 @@ namespace AnyTalk
                 return;
             }
 
-            _trayIcon?.Dispose();
-            _hotkeyManager?.Dispose();
+            if (_trayIcon != null)
+            {
+                _trayIcon.Visible = false;
+                _trayIcon.Dispose();
+            }
+            
+            (_hotkeyManager as IDisposable)?.Dispose();
             _audioRecorder?.Dispose();
             base.OnFormClosing(e);
         }
