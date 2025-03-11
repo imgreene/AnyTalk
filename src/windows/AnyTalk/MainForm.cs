@@ -14,8 +14,6 @@ public partial class MainForm : Form
     private readonly ToolStripMenuItem exitMenuItem;
     private readonly AudioRecorder _audioRecorder;
     private readonly Settings settings;
-    private bool isRecording;
-    private readonly HotkeyManager _hotkeyManager;
     private bool _isRecording = false;
 
     public MainForm()
@@ -23,7 +21,6 @@ public partial class MainForm : Form
         InitializeComponent();
         LoadSettings();
 
-        // Initialize all readonly fields
         notifyIcon = new NotifyIcon
         {
             Icon = new Icon("Resources/AppIcon.ico"),
@@ -31,35 +28,17 @@ public partial class MainForm : Form
         };
 
         _audioRecorder = new AudioRecorder();
-        
-        _hotkeyManager = new HotkeyManager(
-            this.Handle,
-            onHotkeyDown: () => {
-                if (!_isRecording)
-                {
-                    BeginInvoke(StartRecording);
-                }
-            },
-            onHotkeyUp: () => {
-                if (_isRecording)
-                {
-                    BeginInvoke(StopRecording);
-                }
-            }
-        );
     }
 
     private void LoadSettings()
     {
-        var settings = SettingsManager.Instance.LoadSettings();
+        settings = SettingsManager.Instance.LoadSettings();
         txtApiKey.Text = settings.ApiKey;
-        // Load other settings...
     }
 
     private void SaveSettings()
     {
-        SettingsManager.Instance.SaveApiKey(txtApiKey.Text);
-        // Save other settings...
+        SettingsManager.Instance.SaveSettings(settings);
     }
 
     private void UpdateWordCount()
@@ -70,14 +49,18 @@ public partial class MainForm : Form
 
     private void UpdateRecordingState()
     {
-        startRecordingMenuItem.Enabled = !isRecording;
-        stopRecordingMenuItem.Enabled = isRecording;
-        // You can add more UI updates based on recording state
+        startRecordingMenuItem.Enabled = !_isRecording;
+        stopRecordingMenuItem.Enabled = _isRecording;
+    }
+
+    private void ShowSettingsTab()
+    {
+        tabControl1.SelectedTab = tabSettings;
     }
 
     private void StartRecording()
     {
-        if (string.IsNullOrEmpty(SettingsManager.Instance.ApiKey))
+        if (string.IsNullOrEmpty(settings.ApiKey))
         {
             MessageBox.Show("Please enter your OpenAI API key in Settings first.", 
                 "API Key Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -89,7 +72,7 @@ public partial class MainForm : Form
         UpdateRecordingState();
         _audioRecorder.StartRecording();
         
-        notifyIcon.Icon = Properties.Resources.RecordingIcon;
+        notifyIcon.Icon = new Icon("Resources/RecordingIcon.ico");
         notifyIcon.Text = "AnyTalk (Recording...)";
     }
 
@@ -103,7 +86,7 @@ public partial class MainForm : Form
         _isRecording = false;
         UpdateRecordingState();
         
-        notifyIcon.Icon = Properties.Resources.DefaultIcon;
+        notifyIcon.Icon = new Icon("Resources/DefaultIcon.ico");
         notifyIcon.Text = "AnyTalk";
 
         var audioFilePath = _audioRecorder.StopRecording();
@@ -144,10 +127,8 @@ public partial class MainForm : Form
                 return;
             }
 
-            // Save to history - this will also trigger word count update
             HistoryManager.Instance.AddEntry(transcribedText);
 
-            // Copy to clipboard and paste
             await this.Invoke(async () =>
             {
                 Clipboard.SetText(transcribedText);
@@ -159,7 +140,6 @@ public partial class MainForm : Form
         {
             this.Invoke(() => this.Cursor = Cursors.Default);
             
-            // Cleanup the temporary audio file
             try
             {
                 if (File.Exists(audioFilePath))

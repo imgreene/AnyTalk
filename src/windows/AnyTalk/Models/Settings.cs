@@ -1,21 +1,9 @@
-using System.Text.Json.Serialization;
-
-namespace AnyTalk.Models;
-
-public class Settings
+namespace AnyTalk.Models
 {
-    [JsonPropertyName("apiKey")]
-    public string ApiKey { get; set; } = string.Empty;
-    
-    [JsonPropertyName("hotKey")]
-    public string HotKey { get; set; } = string.Empty;
-    
-    [JsonPropertyName("language")]
-    public string Language { get; set; } = "en";
-    
-    [JsonPropertyName("launchAtStartup")]
-    public bool LaunchAtStartup { get; set; } = false;
-    
-    [JsonPropertyName("selectedMicrophone")]
-    public string? SelectedMicrophone { get; set; }
+    public class Settings
+    {
+        public string ApiKey { get; set; } = string.Empty;
+        public string Language { get; set; } = "en";
+        public bool LaunchAtStartup { get; set; } = false;
+    }
 }

@@ -1,100 +1,46 @@
-using System.Text.Json;
 using AnyTalk.Models;
+using System.Text.Json;
 
-namespace AnyTalk.Services;
-
-public class SettingsManager
+namespace AnyTalk.Services
 {
-    private static SettingsManager? instance;
-    private Settings settings;
-    private readonly string settingsFilePath;
-
-    public static SettingsManager Instance
+    public class SettingsManager
     {
-        get
-        {
-            instance ??= new SettingsManager();
-            return instance;
-        }
-    }
-
-    private SettingsManager()
-    {
-        string appDataPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AnyTalk"
+        private static readonly SettingsManager _instance = new();
+        private readonly string _settingsPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "AnyTalk",
+            "settings.json"
         );
 
-        if (!Directory.Exists(appDataPath))
+        public static SettingsManager Instance => _instance;
+
+        private SettingsManager()
         {
-            Directory.CreateDirectory(appDataPath);
+            Directory.CreateDirectory(Path.GetDirectoryName(_settingsPath)!);
         }
 
-        settingsFilePath = Path.Combine(appDataPath, "settings.json");
-        settings = LoadSettingsFromFile();
-    }
-
-    public Settings LoadSettings()
-    {
-        return settings;
-    }
-
-    public void SaveApiKey(string apiKey)
-    {
-        settings.ApiKey = apiKey;
-        SaveSettingsToFile();
-    }
-
-    public void SaveHotkey(string hotkey)
-    {
-        settings.HotKey = hotkey;
-        SaveSettingsToFile();
-    }
-
-    private Settings LoadSettingsFromFile()
-    {
-        try
+        public Settings LoadSettings()
         {
-            if (File.Exists(settingsFilePath))
+            if (!File.Exists(_settingsPath))
             {
-                string json = File.ReadAllText(settingsFilePath);
-                var loadedSettings = JsonSerializer.Deserialize<Settings>(json);
-                if (loadedSettings != null)
-                {
-                    return loadedSettings;
-                }
+                return new Settings();
+            }
+
+            try
+            {
+                var json = File.ReadAllText(_settingsPath);
+                return JsonSerializer.Deserialize<Settings>(json) ?? new Settings();
+            }
+            catch
+            {
+                return new Settings();
             }
         }
-        catch (Exception ex)
-        {
-            MessageBox.Show(
-                $"Error loading settings: {ex.Message}",
-                "Settings Error",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning
-            );
-        }
-        return new Settings();
-    }
 
-    private void SaveSettingsToFile()
-    {
-        try
+        public void SaveSettings(Settings settings)
         {
-            string json = JsonSerializer.Serialize(settings, new JsonSerializerOptions 
-            { 
-                WriteIndented = true 
-            });
-            File.WriteAllText(settingsFilePath, json);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(
-                $"Error saving settings: {ex.Message}",
-                "Settings Error",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning
-            );
+            var json = JsonSerializer.Serialize(settings);
+            File.WriteAllText(_settingsPath, json);
         }
     }
 }

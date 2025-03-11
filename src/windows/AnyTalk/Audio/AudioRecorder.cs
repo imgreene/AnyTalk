@@ -1,5 +1,6 @@
 using NAudio.Wave;
 using System;
+using System.IO;
 
 namespace AnyTalk.Audio
 {
@@ -12,17 +13,39 @@ namespace AnyTalk.Audio
 
         public AudioRecorder()
         {
-            // Constructor implementation
+            tempFilePath = Path.Combine(Path.GetTempPath(), "recording.wav");
         }
 
         public void StartRecording()
         {
-            // Existing implementation
+            waveIn = new WaveInEvent();
+            waveIn.WaveFormat = new WaveFormat(44100, 1);
+            writer = new WaveFileWriter(tempFilePath, waveIn.WaveFormat);
+
+            waveIn.DataAvailable += (s, e) =>
+            {
+                writer.Write(e.Buffer, 0, e.BytesRecorded);
+            };
+
+            waveIn.StartRecording();
         }
 
         public string StopRecording()
         {
-            // Existing implementation
+            if (waveIn != null)
+            {
+                waveIn.StopRecording();
+                waveIn.Dispose();
+                waveIn = null;
+            }
+
+            if (writer != null)
+            {
+                writer.Dispose();
+                writer = null;
+            }
+
+            return tempFilePath;
         }
 
         public void Dispose()
