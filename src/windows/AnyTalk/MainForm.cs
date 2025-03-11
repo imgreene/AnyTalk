@@ -1,169 +1,95 @@
-using AnyTalk.Models;
 using AnyTalk.Services;
-using System;
-using System.Windows.Forms;
+using AnyTalk.Models;
 
 namespace AnyTalk
 {
     public partial class MainForm : Form
     {
         private readonly Settings _settings;
-        private readonly AudioRecorder _audioRecorder;
-        private readonly NotifyIcon notifyIcon;
-        private bool _isRecording;
+        private readonly SettingsManager _settingsManager;
+        private readonly AudioRecorderService _audioRecorder;
+        private readonly WhisperService _whisperService;
 
         public MainForm()
         {
             InitializeComponent();
-            _settings = SettingsManager.Instance.LoadSettings();
-            _audioRecorder = new AudioRecorder();
-            
-            notifyIcon = new NotifyIcon
-            {
-                Icon = Properties.Resources.AppIcon,
-                Visible = true,
-                Text = "AnyTalk"
-            };
-
-            InitializeHotkeys();
+            _settingsManager = SettingsManager.Instance;
+            _settings = _settingsManager.LoadSettings();
+            _audioRecorder = new AudioRecorderService();
+            _whisperService = new WhisperService(_settings);
+            InitializeUI();
         }
 
-        private void InitializeHotkeys()
+        private void InitializeUI()
         {
-            var hotkeyManager = new HotkeyManager(
-                Handle,
-                () => StartRecording(),
-                () => StopRecording()
-            );
+            // Initialize UI components
+            UpdateUIState();
         }
 
-        private void StartRecording()
-        {
-            if (_isRecording) return;
-            _isRecording = true;
-            _audioRecorder.StartRecording(_settings.InputDevice);
-        }
-
-        private async void StopRecording()
-        {
-            if (!_isRecording) return;
-            _isRecording = false;
-
-            string? audioFilePath = null;
-            await _audioRecorder.StopRecording(path => audioFilePath = path);
-
-            if (!string.IsNullOrEmpty(audioFilePath))
-            {
-                await ProcessRecording(audioFilePath);
-            }
-        }
-
-        private async Task ProcessRecording(string audioFilePath)
+        private async Task StartRecordingAsync()
         {
             try
             {
-                this.Invoke(() => this.Cursor = Cursors.WaitCursor);
-
-                var result = await WhisperService.Instance.TranscribeAudio(audioFilePath);
-
-                if (!result.IsSuccess)
-                {
-                    string userMessage = result.Error switch
-                    {
-                        WhisperError.NoAPIKey => "Please enter your OpenAI API key in Settings first.",
-                        WhisperError.InvalidAudioFile => "The audio file could not be processed.",
-                        WhisperError.NetworkError => $"Network error: {result.ErrorMessage}",
-                        WhisperError.APIError => $"API error: {result.ErrorMessage}",
-                        _ => "An unknown error occurred."
-                    };
-
-                    MessageBox.Show(userMessage, "Transcription Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                var transcribedText = result.Value;
-                if (string.IsNullOrWhiteSpace(transcribedText))
-                {
-                    MessageBox.Show("No speech detected in the recording.", 
-                        "Empty Transcription", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
-
-                HistoryManager.Instance.AddEntry(transcribedText);
-
-                await this.Invoke(async () =>
-                {
-                    Clipboard.SetText(transcribedText);
-                    await Task.Delay(100);
-                    SendKeys.SendWait("^v");
-                });
+                await _audioRecorder.StartRecordingAsync();
             }
-            finally
+            catch (Exception ex)
             {
-                this.Invoke(() => this.Cursor = Cursors.Default);
-                
-                try
-                {
-                    if (File.Exists(audioFilePath))
-                    {
-                        File.Delete(audioFilePath);
-                    }
-                }
-                catch { /* ignore cleanup errors */ }
+                MessageBox.Show($"Failed to start recording: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void ShowMainWindow(object? sender, EventArgs e)
+        private async Task StopRecordingAsync()
         {
-            this.Show();
-            this.WindowState = FormWindowState.Normal;
-            this.Activate();
+            try
+            {
+                var audioFile = await _audioRecorder.StopRecordingAsync();
+                if (audioFile != null)
+                {
+                    await ProcessAudioFileAsync(audioFile);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to stop recording: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
-        private void Exit(object? sender, EventArgs e)
+        private async Task ProcessAudioFileAsync(string audioFile)
         {
-            notifyIcon.Visible = false;
-            Application.Exit();
+            try
+            {
+                var transcription = await _whisperService.TranscribeAudioAsync(audioFile);
+                // Handle transcription result
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Transcription failed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void SaveSettings()
+        {
+            _settingsManager.SaveSettings(_settings);
+            UpdateUIState();
+        }
+
+        private void ShowSettingsTab()
+        {
+            if (tabControl1.TabPages.Contains(tabSettings))
+            {
+                tabControl1.SelectedTab = tabSettings;
+            }
+        }
+
+        private void UpdateUIState()
+        {
+            // Update UI based on current settings
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
+            _audioRecorder?.Dispose();
             base.OnFormClosing(e);
-            SaveSettings();
-        }
-
-        private void StartRecording_Click(object? sender, EventArgs e)
-        {
-            StartRecording();
-        }
-
-        private void StopRecording_Click(object? sender, EventArgs e)
-        {
-            StopRecording();
-        }
-
-        private void Settings_Click(object? sender, EventArgs e)
-        {
-            ShowSettingsTab();
-        }
-
-        private void Exit_Click(object? sender, EventArgs e)
-        {
-            Application.Exit();
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                components?.Dispose();
-                notifyIcon?.Dispose();
-                if (_audioRecorder is IDisposable disposableRecorder)
-                {
-                    disposableRecorder.Dispose();
-                }
-            }
-            base.Dispose(disposing);
         }
     }
 }
