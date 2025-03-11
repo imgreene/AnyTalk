@@ -8,7 +8,7 @@ namespace AnyTalk
     {
         private readonly Settings _settings;
         private readonly SettingsManager _settingsManager;
-        private readonly AudioRecorder _audioRecorder;
+        private readonly AnyTalk.Audio.AudioRecorder _audioRecorder;
         private readonly WhisperService _whisperService;
 
         public MainForm()
@@ -16,7 +16,7 @@ namespace AnyTalk
             InitializeComponent();
             _settingsManager = SettingsManager.Instance;
             _settings = _settingsManager.LoadSettings();
-            _audioRecorder = new AudioRecorder();
+            _audioRecorder = new AnyTalk.Audio.AudioRecorder();
             _whisperService = WhisperService.Instance;
             InitializeUI();
         }
