@@ -4,6 +4,30 @@
 
 # AnyTalk
 
+⚠️ **Installation Options**
+
+**Option 1: Run Downloaded App**
+1. Double-click AnyTalk.app
+2. At "malicious software" warning → Click "Done"
+3. Open System Settings → Privacy & Security
+4. Scroll to bottom → Click "Open Anyway"
+5. Click "Open Anyway" again
+6. Enter your computer password when prompted
+
+**Option 2: Build from Source**
+- Clone repo and build in Xcode
+- Or create archive from Xcode and run locally
+
+> Why the warnings? AnyTalk is open-source and not notarized with Apple. You can review the source code and build it yourself, or use our pre-built app following the steps above.
+
+## First-Time Setup
+1. Enter your OpenAI API key and click Save
+2. When prompted about accessibility features:
+   - Click "Open System Settings"
+   - Allow AnyTalk in Privacy & Security → Accessibility
+
+---
+
 AnyTalk is a macOS menubar application that provides voice-to-text dictation using OpenAI's Whisper API.
 
 Developed by [@GreeneChase](https://X.com/GreeneChase)
