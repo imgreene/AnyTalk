@@ -1,41 +1,40 @@
-using AnyTalk.Models;
+using AnyTalk.Services;
+using System.Windows.Forms;
 
 namespace AnyTalk
 {
     public partial class SettingsForm : Form
     {
         private readonly Settings _settings;
+        private Label lblCurrentHotkey;
+        private TextBox txtApiKey;
+        private Button btnSaveApiKey;
+        private Button btnRecordHotkey;
 
         public SettingsForm()
         {
             InitializeComponent();
             _settings = SettingsManager.Instance.LoadSettings();
-            LoadCurrentSettings();
+            InitializeUI();
         }
 
-        private void LoadCurrentSettings()
+        private void InitializeUI()
         {
+            lblCurrentHotkey.Text = $"Current: {_settings.HotKey}";
             txtApiKey.Text = _settings.ApiKey;
-            cboMicrophone.SelectedItem = _settings.SelectedMicrophone;
-            lblCurrentHotkey.Text = _settings.HotKey;
-            chkLaunchAtStartup.Checked = _settings.LaunchAtStartup;
         }
 
-        private void SaveSettings()
+        private void btnRecordHotkey_Click(object sender, EventArgs e)
         {
-            _settings.ApiKey = txtApiKey.Text;
-            _settings.SelectedMicrophone = cboMicrophone.SelectedItem?.ToString() ?? string.Empty;
-            _settings.HotKey = lblCurrentHotkey.Text;
-            _settings.LaunchAtStartup = chkLaunchAtStartup.Checked;
-            
-            SettingsManager.Instance.SaveSettings(_settings);
-        }
-
-        private void btnSave_Click(object sender, EventArgs e)
-        {
-            SaveSettings();
-            DialogResult = DialogResult.OK;
-            Close();
+            using (var hotkeyForm = new HotkeyRecorderForm())
+            {
+                if (hotkeyForm.ShowDialog() == DialogResult.OK)
+                {
+                    lblCurrentHotkey.Text = $"Current: {hotkeyForm.HotkeyString}";
+                    _settings.HotKey = hotkeyForm.HotkeyString;
+                    SettingsManager.Instance.SaveSettings(_settings);
+                }
+            }
         }
     }
 }

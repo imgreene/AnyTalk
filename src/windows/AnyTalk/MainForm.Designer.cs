@@ -6,18 +6,13 @@ namespace AnyTalk
     {
         private System.ComponentModel.IContainer components = null;
 
-        private TabControl tabControl1;
-        private TabPage tabHome;
-        private TabPage tabHistory;
-        private TabPage tabSettings;
-        private Label lblTotalWordsLabel;
-        private Label lblTotalWords;
-        private ListView listHistory;
+#pragma warning disable 0169
         private TableLayoutPanel settingsPanel;
         private Label apiKeyLabel;
+        private Label hotkeyLabel;
+#pragma warning restore 0169
         private TextBox txtApiKey;
         private Button btnSaveApiKey;
-        private Label hotkeyLabel;
         private Label lblCurrentHotkey;
         private Button btnRecordHotkey;
         private Label lblLanguage;
