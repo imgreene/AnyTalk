@@ -10,7 +10,7 @@ Developed by [@GreeneChase](https://X.com/GreeneChase)
 
 ## ⚠️ OpenAI API Key Required
 - Requires your OpenAI API key
-- Whisper API currentlycosts $0.006 per minute of audio
+- Whisper API currently costs $0.006 per minute of audio
 - You can monitor your usage on your [OpenAI usage dashboard](https://platform.openai.com/account/usage)
 
 ### Cost Comparison
