@@ -6,70 +6,67 @@ namespace AnyTalk.Audio
 {
     public class AudioRecorder : IDisposable
     {
-        private WaveInEvent waveIn;
-        private WaveFileWriter writer;
-        private string tempFilePath;
-        private bool disposed = false;
+        private WaveInEvent? _waveIn;
+        private WaveFileWriter? _writer;
+        private string? _outputFilePath;
+        private readonly string _tempDirectory;
 
         public AudioRecorder()
         {
-            tempFilePath = Path.Combine(Path.GetTempPath(), "recording.wav");
+            _tempDirectory = Path.Combine(Path.GetTempPath(), "AnyTalk");
+            Directory.CreateDirectory(_tempDirectory);
         }
 
         public void StartRecording()
         {
-            waveIn = new WaveInEvent();
-            waveIn.WaveFormat = new WaveFormat(44100, 1);
-            writer = new WaveFileWriter(tempFilePath, waveIn.WaveFormat);
+            StopRecording(_ => { }); // Clean up any existing recording
 
-            waveIn.DataAvailable += (s, e) =>
+            _outputFilePath = Path.Combine(_tempDirectory, $"recording_{DateTime.Now:yyyyMMddHHmmss}.wav");
+            
+            _waveIn = new WaveInEvent
             {
-                writer.Write(e.Buffer, 0, e.BytesRecorded);
+                WaveFormat = new WaveFormat(44100, 1)
             };
 
-            waveIn.StartRecording();
+            _writer = new WaveFileWriter(_outputFilePath, _waveIn.WaveFormat);
+            _waveIn.DataAvailable += OnDataAvailable;
+            _waveIn.StartRecording();
         }
 
-        public string StopRecording()
+        public void StopRecording(Action<string> onComplete)
         {
-            if (waveIn != null)
+            if (_waveIn != null)
             {
-                waveIn.StopRecording();
-                waveIn.Dispose();
-                waveIn = null;
+                _waveIn.StopRecording();
+                _waveIn.DataAvailable -= OnDataAvailable;
+                _waveIn.Dispose();
+                _waveIn = null;
             }
 
-            if (writer != null)
+            if (_writer != null)
             {
-                writer.Dispose();
-                writer = null;
+                _writer.Dispose();
+                _writer = null;
             }
 
-            return tempFilePath;
+            if (_outputFilePath != null)
+            {
+                onComplete(_outputFilePath);
+                _outputFilePath = null;
+            }
+        }
+
+        private void OnDataAvailable(object? sender, WaveInEventArgs e)
+        {
+            if (_writer != null)
+            {
+                _writer.Write(e.Buffer, 0, e.BytesRecorded);
+            }
         }
 
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposed)
-            {
-                if (disposing)
-                {
-                    waveIn?.Dispose();
-                    writer?.Dispose();
-                }
-                disposed = true;
-            }
-        }
-
-        ~AudioRecorder()
-        {
-            Dispose(false);
+            StopRecording(_ => { });
         }
     }
 }

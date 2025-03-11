@@ -171,7 +171,8 @@ namespace AnyTalk
                 return;
             }
 
-            SettingsManager.Instance.SaveApiKey(txtApiKey.Text);
+            _settings.ApiKey = txtApiKey.Text;
+            SettingsManager.Instance.SaveSettings(_settings);
             MessageBox.Show("API key saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
@@ -182,7 +183,8 @@ namespace AnyTalk
                 if (hotkeyForm.ShowDialog() == DialogResult.OK)
                 {
                     lblCurrentHotkey.Text = $"Current: {hotkeyForm.HotkeyString}";
-                    SettingsManager.Instance.SaveHotkey(hotkeyForm.HotkeyString);
+                    _settings.HotKey = hotkeyForm.HotkeyString;
+                    SettingsManager.Instance.SaveSettings(_settings);
                 }
             }
         }

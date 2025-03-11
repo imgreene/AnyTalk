@@ -4,34 +4,36 @@ namespace AnyTalk
 {
     public partial class SettingsForm : Form
     {
-        private readonly Settings settings;
+        private readonly Settings _settings;
 
-        public SettingsForm(Settings settings)
+        public SettingsForm()
         {
             InitializeComponent();
-            this.settings = settings;
-            LoadSettings();
+            _settings = SettingsManager.Instance.LoadSettings();
+            LoadCurrentSettings();
         }
 
-        private void LoadSettings()
+        private void LoadCurrentSettings()
         {
-            if (settings != null)
-            {
-                txtApiKey.Text = settings.ApiKey;
-                cboMicrophone.Text = settings.SelectedMicrophone;
-                cboLanguage.Text = settings.Language;
-                chkLaunchAtStartup.Checked = settings.LaunchAtStartup;
-                txtHotKey.Text = settings.HotKey;
-            }
+            txtApiKey.Text = _settings.ApiKey;
+            cboMicrophone.SelectedItem = _settings.SelectedMicrophone;
+            lblCurrentHotkey.Text = _settings.HotKey;
+            chkLaunchAtStartup.Checked = _settings.LaunchAtStartup;
+        }
+
+        private void SaveSettings()
+        {
+            _settings.ApiKey = txtApiKey.Text;
+            _settings.SelectedMicrophone = cboMicrophone.SelectedItem?.ToString() ?? string.Empty;
+            _settings.HotKey = lblCurrentHotkey.Text;
+            _settings.LaunchAtStartup = chkLaunchAtStartup.Checked;
+            
+            SettingsManager.Instance.SaveSettings(_settings);
         }
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            settings.ApiKey = txtApiKey.Text;
-            settings.SelectedMicrophone = cboMicrophone.Text;
-            settings.Language = cboLanguage.Text;
-            settings.LaunchAtStartup = chkLaunchAtStartup.Checked;
-            settings.HotKey = txtHotKey.Text;
+            SaveSettings();
             DialogResult = DialogResult.OK;
             Close();
         }

@@ -13,21 +13,45 @@ public partial class MainForm : Form
     private readonly ToolStripMenuItem settingsMenuItem;
     private readonly ToolStripMenuItem exitMenuItem;
     private readonly AudioRecorder _audioRecorder;
-    private readonly Settings settings;
+    private readonly Settings _settings;
     private bool _isRecording = false;
 
     public MainForm()
     {
+        // Initialize all required fields before InitializeComponent
+        contextMenu = new ContextMenuStrip();
+        startRecordingMenuItem = new ToolStripMenuItem("Start Recording", null, StartRecording_Click);
+        stopRecordingMenuItem = new ToolStripMenuItem("Stop Recording", null, StopRecording_Click);
+        settingsMenuItem = new ToolStripMenuItem("Settings", null, Settings_Click);
+        exitMenuItem = new ToolStripMenuItem("Exit", null, Exit_Click);
+        _audioRecorder = new AudioRecorder();
+        _settings = SettingsManager.Instance.LoadSettings() ?? new Settings();
+
         InitializeComponent();
+        InitializeNotifyIcon();
         LoadSettings();
+    }
+
+    private void InitializeNotifyIcon()
+    {
+        contextMenu.Items.AddRange(new ToolStripItem[]
+        {
+            startRecordingMenuItem,
+            stopRecordingMenuItem,
+            new ToolStripSeparator(),
+            settingsMenuItem,
+            new ToolStripSeparator(),
+            exitMenuItem
+        });
 
         notifyIcon = new NotifyIcon
         {
             Icon = new Icon("Resources/AppIcon.ico"),
+            ContextMenuStrip = contextMenu,
             Visible = true
         };
 
-        _audioRecorder = new AudioRecorder();
+        UpdateRecordingState();
     }
 
     private void LoadSettings()
@@ -86,10 +110,15 @@ public partial class MainForm : Form
         _isRecording = false;
         UpdateRecordingState();
         
-        notifyIcon.Icon = new Icon("Resources/DefaultIcon.ico");
-        notifyIcon.Text = "AnyTalk";
+        if (notifyIcon != null)
+        {
+            notifyIcon.Icon = new Icon("Resources/DefaultIcon.ico");
+            notifyIcon.Text = "AnyTalk";
+        }
 
-        var audioFilePath = _audioRecorder.StopRecording();
+        string? audioFilePath = null;
+        _audioRecorder.StopRecording(path => audioFilePath = path);
+
         if (!string.IsNullOrEmpty(audioFilePath))
         {
             await ProcessRecording(audioFilePath);
@@ -170,11 +199,34 @@ public partial class MainForm : Form
         SaveSettings();
     }
 
+    private void StartRecording_Click(object? sender, EventArgs e)
+    {
+        StartRecording();
+    }
+
+    private void StopRecording_Click(object? sender, EventArgs e)
+    {
+        StopRecording();
+    }
+
+    private void Settings_Click(object? sender, EventArgs e)
+    {
+        ShowSettingsTab();
+    }
+
+    private void Exit_Click(object? sender, EventArgs e)
+    {
+        Application.Exit();
+    }
+
     protected override void Dispose(bool disposing)
     {
-        if (disposing && (components != null))
+        if (disposing)
         {
-            components.Dispose();
+            notifyIcon?.Dispose();
+            contextMenu?.Dispose();
+            _audioRecorder?.Dispose();
+            components?.Dispose();
         }
         base.Dispose(disposing);
     }
