@@ -22,9 +22,11 @@
 
 ## First-Time Setup
 1. Enter your OpenAI API key and click Save
-2. When prompted about accessibility features:
+2. Complete your first transcription (it will not paste yet)
+3. When prompted about accessibility features:
    - Click "Open System Settings"
    - Allow AnyTalk in Privacy & Security → Accessibility
+4. Transcriptions will not paste to wherever your cursor is
 
 ---
 
