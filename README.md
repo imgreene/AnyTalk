@@ -1,6 +1,6 @@
 # AnyTalk
 
-AnyTalk is a desktop application that provides voice-to-text dictation using OpenAI's Whisper API. It runs in the background and is accessible via a menubar icon (macOS) or system tray icon (Windows).
+AnyTalk is a desktop application that provides voice-to-text dictation using OpenAI's Whisper API. It runs in the background and is accessible via a menubar icon.
 
 ## ⚠️ Important: OpenAI API Key Required
 AnyTalk requires your own OpenAI API key to function. You will be charged by OpenAI based on your usage:
@@ -32,9 +32,7 @@ BTC: bc1qwjy57p4pq6n4qejrvq6yfjjq37unqen33ckakz
 
 ## Features
 
-- **Background Voice Dictation**: 
-  - macOS: Press ⌘⌥ (Command+Option) to start dictating
-  - Windows: Press Ctrl+Alt to start dictating
+- **Background Voice Dictation**: Press ⌘⌥ (Command+Option) to start dictating
 - **High-Quality Transcription**: Uses OpenAI's Whisper API (requires your API key)
 - **Multi-Language Support**: Transcribe in multiple languages
 - **Automatic Clipboard Copy**: Transcribed text is automatically copied
@@ -43,21 +41,13 @@ BTC: bc1qwjy57p4pq6n4qejrvq6yfjjq37unqen33ckakz
 
 ## System Requirements
 
-### macOS
 - macOS 11.0 (Big Sur) or later
-- Internet connection
-- Microphone access
-- OpenAI API key
-
-### Windows
-- Windows 10 or later
 - Internet connection
 - Microphone access
 - OpenAI API key
 
 ## Download and Install
 
-### macOS
 1. Download `AnyTalk-macOS.zip` from the [releases page](https://github.com/imgreene/AnyTalk/releases/tag/v1.0.1)
 2. Unzip the file
 3. Move AnyTalk.app to your Applications folder
@@ -65,11 +55,6 @@ BTC: bc1qwjy57p4pq6n4qejrvq6yfjjq37unqen33ckakz
 5. If you see a security warning:
    - Open System Preferences → Security & Privacy
    - Click "Open Anyway"
-
-### Windows
-1. Download `AnyTalk-Windows-Setup.exe` from the [releases page](https://github.com/imgreene/AnyTalk/releases/tag/v1.0.1)
-2. Run the installer
-3. Follow the installation wizard
 
 ## First-Time Setup
 
@@ -80,7 +65,7 @@ BTC: bc1qwjy57p4pq6n4qejrvq6yfjjq37unqen33ckakz
    - Keep your API key secure and never share it
 
 2. **Configure AnyTalk**:
-   - Click the AnyTalk icon in the menubar (macOS) or system tray (Windows)
+   - Click the AnyTalk icon in the menubar
    - Go to Settings
    - Enter your OpenAI API key and click "Save"
    - Grant microphone permissions when prompted
@@ -88,7 +73,7 @@ BTC: bc1qwjy57p4pq6n4qejrvq6yfjjq37unqen33ckakz
 ## Usage
 
 1. **Quick Dictation**:
-   - Press the hotkey (⌘⌥ on macOS, Ctrl+Alt on Windows) anywhere to start dictation
+   - Press ⌘⌥ (Command+Option) anywhere to start dictation
    - Speak clearly into your microphone
    - Release the hotkey to stop and transcribe your speech
    - The transcribed text will be copied to your clipboard automatically
@@ -115,17 +100,10 @@ BTC: bc1qwjy57p4pq6n4qejrvq6yfjjq37unqen33ckakz
 
 ## Troubleshooting
 
-### macOS
-- If dictation isn't working, check:
-  - System Preferences → Security & Privacy → Privacy → Microphone
-  - Ensure AnyTalk has microphone access
-  - Verify your API key is correctly entered in Settings
-
-### Windows
-- If dictation isn't working, check:
-  - Windows Settings → Privacy → Microphone
-  - Ensure AnyTalk has microphone access
-  - Verify your API key is correctly entered in Settings
+If dictation isn't working, check:
+- System Preferences → Security & Privacy → Privacy → Microphone
+- Ensure AnyTalk has microphone access
+- Verify your API key is correctly entered in Settings
 
 ## Support
 
