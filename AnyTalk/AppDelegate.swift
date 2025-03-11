@@ -277,38 +277,49 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func pasteTextAtCursor(_ text: String) {
-        // Create a pasteboard instance
-        let pasteboard = NSPasteboard.general
+        // Create event source once and reuse
+        guard let source = CGEventSource(stateID: .combinedSessionState) else { return }
         
-        // Prepare the text with smart space handling
-        let trimmedText = text.trimmingCharacters(in: .whitespaces)
-        let textToInsert = trimmedText + " " // Add space at the end instead of beginning
+        // Prepare text once
+        let textToInsert = text.trimmingCharacters(in: .whitespaces) + " "
         
-        // Set our transcribed text
-        pasteboard.clearContents()
-        pasteboard.setString(textToInsert, forType: .string)
+        // Use dispatch group to ensure synchronization
+        let pasteGroup = DispatchGroup()
+        pasteGroup.enter()
         
-        // Create and post the paste event
-        if let source = CGEventSource(stateID: .combinedSessionState) {
-            // Command down
+        DispatchQueue.global(qos: .userInteractive).async {
+            // Atomic clipboard operation
+            NSPasteboard.general.prepareForNewContents(with: .currentHostOnly)
+            NSPasteboard.general.setString(textToInsert, forType: .string)
+            
+            // Pre-create all events with proper flags
             let cmdDown = CGEvent(keyboardEventSource: source, virtualKey: 0x37, keyDown: true)
-            cmdDown?.flags = .maskCommand
-            
-            // V down/up
             let vDown = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: true)
-            vDown?.flags = .maskCommand
             let vUp = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: false)
-            vUp?.flags = .maskCommand
-            
-            // Command up
             let cmdUp = CGEvent(keyboardEventSource: source, virtualKey: 0x37, keyDown: false)
             
-            // Post all events in sequence
-            [cmdDown, vDown, vUp, cmdUp].forEach { event in
-                event?.post(tap: .cgAnnotatedSessionEventTap)
-                usleep(1000) // 1ms delay
+            // Configure events
+            cmdDown?.flags = .maskCommand
+            vDown?.flags = .maskCommand
+            vUp?.flags = .maskCommand
+            
+            // Post events in tight sequence if all events were created successfully
+            if let cmdDown = cmdDown,
+               let vDown = vDown,
+               let vUp = vUp,
+               let cmdUp = cmdUp {
+                
+                [cmdDown, vDown, vUp, cmdUp].forEach { event in
+                    event.post(tap: .cghidEventTap)
+                    usleep(100) // Minimal delay (0.1ms) to maintain event order
+                }
             }
+            
+            pasteGroup.leave()
         }
+        
+        // Wait for paste completion with timeout
+        _ = pasteGroup.wait(timeout: .now() + 0.1)
     }
     
     private func isValidTranscription(_ text: String) -> Bool {
