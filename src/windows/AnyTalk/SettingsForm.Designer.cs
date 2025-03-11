@@ -3,12 +3,12 @@ namespace AnyTalk
     partial class SettingsForm
     {
         private System.ComponentModel.IContainer components = null;
+        
+        // These fields should only be declared once
+        private Label lblCurrentHotkey;
         private TextBox txtApiKey;
-        private ComboBox cboMicrophone;
-        private ComboBox cboLanguage;
-        private CheckBox chkLaunchAtStartup;
-        private TextBox txtHotKey;
-        private Button btnSave;
+        private Button btnSaveApiKey;
+        private Button btnRecordHotkey;
 
         protected override void Dispose(bool disposing)
         {
