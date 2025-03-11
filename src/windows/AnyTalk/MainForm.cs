@@ -1,5 +1,6 @@
 using AnyTalk.Services;
 using AnyTalk.Models;
+using AnyTalk.Audio;
 
 namespace AnyTalk
 {
@@ -7,7 +8,7 @@ namespace AnyTalk
     {
         private readonly Settings _settings;
         private readonly SettingsManager _settingsManager;
-        private readonly AudioRecorderService _audioRecorder;
+        private readonly AudioRecorder _audioRecorder;
         private readonly WhisperService _whisperService;
 
         public MainForm()
@@ -15,69 +16,51 @@ namespace AnyTalk
             InitializeComponent();
             _settingsManager = SettingsManager.Instance;
             _settings = _settingsManager.LoadSettings();
-            _audioRecorder = new AudioRecorderService();
-            _whisperService = new WhisperService(_settings);
+            _audioRecorder = new AudioRecorder();
+            _whisperService = WhisperService.Instance;
             InitializeUI();
         }
 
         private void InitializeUI()
         {
-            // Initialize UI components
             UpdateUIState();
         }
 
-        private async Task StartRecordingAsync()
+        private async void btnRecord_Click(object sender, EventArgs e)
         {
-            try
-            {
-                await _audioRecorder.StartRecordingAsync();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to start recording: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            _audioRecorder.StartRecording();
         }
 
-        private async Task StopRecordingAsync()
+        private async void btnStop_Click(object sender, EventArgs e)
         {
-            try
-            {
-                var audioFile = await _audioRecorder.StopRecordingAsync();
+            _audioRecorder.StopRecording(async (audioFile) => {
                 if (audioFile != null)
                 {
                     await ProcessAudioFileAsync(audioFile);
                 }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to stop recording: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            });
         }
 
         private async Task ProcessAudioFileAsync(string audioFile)
         {
             try
             {
-                var transcription = await _whisperService.TranscribeAudioAsync(audioFile);
-                // Handle transcription result
+                var result = await _whisperService.TranscribeAudio(audioFile);
+                if (result.IsSuccess && result.Value != null)
+                {
+                    // Handle successful transcription
+                    MessageBox.Show(result.Value, "Transcription Result");
+                }
+                else
+                {
+                    MessageBox.Show($"Transcription failed: {result.ErrorMessage}", "Error", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Transcription failed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void SaveSettings()
-        {
-            _settingsManager.SaveSettings(_settings);
-            UpdateUIState();
-        }
-
-        private void ShowSettingsTab()
-        {
-            if (tabControl1.TabPages.Contains(tabSettings))
-            {
-                tabControl1.SelectedTab = tabSettings;
+                MessageBox.Show($"Transcription failed: {ex.Message}", "Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
