@@ -8,15 +8,25 @@
 3. Move AnyTalk.app to your Applications folder
 4. Launch AnyTalk
 5. If you see a security warning:
-   - Open System Preferences → Security & Privacy
-   - Click "Open Anyway"
+   - Click "Done"
+   - Open System Settings → Privacy & Security
+   - Scroll to bottom → Click "Open Anyway"
+   - Click "Open Anyway" again
+   - Enter your computer password when prompted
 
 ## First-Time Setup
-1. Get your OpenAI API key from https://platform.openai.com/account/api-keys
-2. Click the AnyTalk icon in the menubar
-3. Go to Settings
-4. Enter your OpenAI API key and click "Save"
-5. Grant microphone permissions when prompted
+1. Enter your OpenAI API key and click Save
+2. Complete your first transcription (it will not paste yet)
+3. When prompted about accessibility features:
+   - Click "Open System Settings"
+   - Allow AnyTalk in Privacy & Security → Accessibility
+4. Transcriptions will now paste to wherever your cursor is
+
+## Usage
+1. Press ⌘⌥ (Command+Option) to start dictation
+2. Speak while holding the hotkey
+3. Release to transcribe
+4. Text will automatically copy to clipboard and paste at cursor position
 
 ## What's New
 - Updated application icon with improved design
@@ -26,3 +36,17 @@
 - Transcription history
 - Multi-language support
 - Customizable settings
+
+## Cost Information
+- Whisper API costs $0.006 per minute of audio
+- Monitor usage at: https://platform.openai.com/account/usage
+- Example costs (at 150 words/minute):
+  - 5 minutes/month = $0.03
+  - 30 minutes/month = $0.18
+  - 2 hours/month = $0.72
+
+## Privacy
+- Records only while hotkey is pressed
+- Audio processed through your OpenAI API key
+- History stored locally
+- No data collection by app developers

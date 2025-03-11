@@ -26,7 +26,7 @@
 3. When prompted about accessibility features:
    - Click "Open System Settings"
    - Allow AnyTalk in Privacy & Security → Accessibility
-4. Transcriptions will not paste to wherever your cursor is
+4. Transcriptions will now paste to wherever your cursor is
 
 ---
 
