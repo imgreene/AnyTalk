@@ -52,6 +52,7 @@ namespace AnyTalk
             
             var startDictationItem = new ToolStripMenuItem("Start Dictation", null, (s, e) => StartRecording());
             var stopDictationItem = new ToolStripMenuItem("Stop Dictation", null, (s, e) => StopRecording());
+            var historyItem = new ToolStripMenuItem("History", null, (s, e) => ShowHistory());
             var settingsItem = new ToolStripMenuItem("Settings", null, (s, e) => ShowSettings());
             var exitItem = new ToolStripMenuItem("Exit", null, (s, e) => Application.Exit());
 
@@ -60,15 +61,13 @@ namespace AnyTalk
                 startDictationItem,
                 stopDictationItem,
                 new ToolStripSeparator(),
+                historyItem,
                 settingsItem,
                 new ToolStripSeparator(),
                 exitItem
             });
 
             _trayIcon.ContextMenuStrip = contextMenu;
-
-            // Double-click to show settings
-            _trayIcon.DoubleClick += (s, e) => ShowSettings();
         }
 
         private void ShowSettings()
@@ -161,6 +160,9 @@ namespace AnyTalk
                 var result = await _whisperService.TranscribeAudio(audioFile);
                 if (result.IsSuccess && result.Value != null)
                 {
+                    // Add to history
+                    HistoryManager.Instance.AddEntry(result.Value);
+
                     // Copy to clipboard
                     if (!string.IsNullOrEmpty(result.Value))
                     {
@@ -229,6 +231,12 @@ namespace AnyTalk
         private void btnStop_Click(object sender, EventArgs e)
         {
             StopRecording();
+        }
+
+        private void ShowHistory()
+        {
+            var historyForm = new Forms.HistoryForm();
+            historyForm.Show();
         }
     }
 }
