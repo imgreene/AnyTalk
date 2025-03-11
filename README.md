@@ -8,6 +8,8 @@ AnyTalk is a macOS menubar application that provides voice-to-text dictation usi
 
 Developed by [@GreeneChase](https://X.com/GreeneChase)
 
+Windows version coming soon!
+
 ## ⚠️ OpenAI API Key Required
 - Requires your OpenAI API key
 - Whisper API currently costs $0.006 per minute of audio
