@@ -187,13 +187,6 @@ namespace AnyTalk
             }
         }
 
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && (components != null))
-            {
-                components.Dispose();
-            }
-            base.Dispose(disposing);
-        }
+        // Dispose method removed - it should be in the main form class
     }
 }

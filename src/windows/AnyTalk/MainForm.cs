@@ -192,15 +192,9 @@ public partial class MainForm : Form
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing)
+        if (disposing && (components != null))
         {
-            if (components != null)
-            {
-                components.Dispose();
-            }
-            _hotkeyManager?.Dispose();
-            _audioRecorder?.Dispose();
-            notifyIcon?.Dispose();
+            components.Dispose();
         }
         base.Dispose(disposing);
     }
