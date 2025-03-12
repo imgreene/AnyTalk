@@ -54,7 +54,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "mic.fill", accessibilityDescription: "AnyTalk")
+            button.image = NSImage(systemSymbolName: "microphone.and.signal.meter.fill", accessibilityDescription: "AnyTalk")
             button.action = #selector(togglePopover)
         }
         
@@ -127,7 +127,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func updateMenuBarIcon() {
         if let button = statusItem?.button {
-            let icon = NSImage(systemSymbolName: "mic.fill", accessibilityDescription: "AnyTalk")
+            let icon = NSImage(systemSymbolName: "microphone.and.signal.meter.fill", accessibilityDescription: "AnyTalk")
             button.image = icon
             
             if isRecording {
