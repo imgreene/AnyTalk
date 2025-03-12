@@ -1,5 +1,6 @@
 <p align="center">
   <img src="assets/anytalk-logo.png" width="128" height="128" alt="AnyTalk Logo">
+  <img src="assets/Main-screen.png" width="300" alt="AnyTalk Main Screen">
 </p>
 
 # AnyTalk
