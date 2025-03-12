@@ -257,7 +257,7 @@ struct SettingsView: View {
                 VStack(spacing: 4) {
                     Text("AnyTalk")
                         .font(.system(size: 14, weight: .semibold))
-                    Text("Version 1.0")
+                    Text("Version 1.0.1")
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
                 }
