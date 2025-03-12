@@ -3,6 +3,11 @@ import Foundation
 import SwiftUI
 import AppKit
 import Cocoa
+import Carbon
+import ServiceManagement
+import AVFoundation
+
+// Remove the @_exported import line since GPTService is in the same module
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
@@ -209,44 +214,106 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Update menubar icon to reflect recording state
         updateMenuBarIcon()
         
-        // Save the original clipboard content
-        let pasteboard = NSPasteboard.general
-        let originalContent = pasteboard.string(forType: .string)
-        
         // Stop recording and process audio
         AudioRecorderService.shared.stopRecording { [weak self] url in
             guard let url = url else { return }
             
-            // Transcribe the audio
+            // 1. Save original clipboard content
+            let pasteboard = NSPasteboard.general
+            let originalClipboardContent = pasteboard.string(forType: .string)
+            
+            // 2. Clear clipboard completely
+            pasteboard.clearContents()
+            
+            // 3. Simulate Command+C to try to copy any selected text
+            let source = CGEventSource(stateID: .combinedSessionState)
+            let cmdDown = CGEvent(keyboardEventSource: source, virtualKey: 0x37, keyDown: true)
+            let cDown = CGEvent(keyboardEventSource: source, virtualKey: 0x08, keyDown: true)
+            let cUp = CGEvent(keyboardEventSource: source, virtualKey: 0x08, keyDown: false)
+            let cmdUp = CGEvent(keyboardEventSource: source, virtualKey: 0x37, keyDown: false)
+            
+            cmdDown?.flags = .maskCommand
+            cDown?.flags = .maskCommand
+            cUp?.flags = .maskCommand
+            
+            [cmdDown, cDown, cUp, cmdUp].forEach { $0?.post(tap: .cghidEventTap) }
+            
+            // Wait a brief moment for the copy operation to complete
+            usleep(50000) // 0.05 seconds
+            
+            // 4. Check if anything was actually selected
+            let selectedText = pasteboard.string(forType: .string)
+            let hasSelectedText = selectedText != nil && !selectedText!.isEmpty
+            
+            // Transcribe the audio with Whisper
             WhisperService.shared.transcribe(audioURL: url) { result in
                 switch result {
                 case .success(let transcription):
                     // Save to history with duration
                     HistoryManager.shared.addEntry(text: transcription, duration: recordingDuration)
                     
-                    // Save the original clipboard content
-                    let pasteboard = NSPasteboard.general
-                    let originalContent = pasteboard.string(forType: .string)
-                    
-                    // Type the text at the current cursor position
-                    self?.pasteTextAtCursor(transcription)
-                    
-                    // Play sound to indicate completion only if sounds are enabled
-                    if SettingsManager.shared.playSounds {
-                        NSSound(named: "Glass")?.play()
-                    }
-                    
-                    // Show notification
-                    let notification = NSUserNotification()
-                    notification.title = "Transcription Complete"
-                    notification.informativeText = "Text inserted at cursor position"
-                    NSUserNotificationCenter.default.deliver(notification)
-                    
-                    // Restore the original clipboard content after a longer delay
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                        if let originalContent = originalContent {
+                    if !hasSelectedText {
+                        // NO SELECTED TEXT: Just paste transcription directly without GPT
+                        print("Direct paste mode - no text selected")
+                        
+                        // Set transcription to clipboard and paste it
+                        pasteboard.clearContents()
+                        pasteboard.setString(transcription, forType: .string)
+                        self?.pasteTextAtCursor(transcription)
+                        
+                        // Restore original clipboard content
+                        if let originalContent = originalClipboardContent {
                             pasteboard.clearContents()
                             pasteboard.setString(originalContent, forType: .string)
+                        }
+                        
+                        // Play completion sound if enabled
+                        if SettingsManager.shared.playSounds {
+                            NSSound(named: "Glass")?.play()
+                        }
+                        return  // Exit early - no GPT processing needed
+                    }
+                    
+                    // SELECTED TEXT: Process with GPT
+                    Task {
+                        do {
+                            print("Processing selected text: '\(selectedText ?? "")'")
+                            print("With transcription: '\(transcription)'")
+                            
+                            let gptResult = try await GPTService.shared.processWithGPT(
+                                selectedText: selectedText ?? "",
+                                userTranscription: transcription
+                            )
+                            
+                            let textToPaste = gptResult == "false" ? transcription : gptResult
+                            
+                            // Set the text to paste to clipboard before pasting
+                            pasteboard.clearContents()
+                            pasteboard.setString(textToPaste, forType: .string)
+                            self?.pasteTextAtCursor(textToPaste)
+                            
+                            // Restore original clipboard content after paste
+                            if let originalContent = originalClipboardContent {
+                                pasteboard.clearContents()
+                                pasteboard.setString(originalContent, forType: .string)
+                            }
+                            
+                            if SettingsManager.shared.playSounds {
+                                NSSound(named: "Glass")?.play()
+                            }
+                        } catch {
+                            print("GPT processing error: \(error)")
+                            
+                            // Set transcription to clipboard before pasting
+                            pasteboard.clearContents()
+                            pasteboard.setString(transcription, forType: .string)
+                            self?.pasteTextAtCursor(transcription)
+                            
+                            // Restore original clipboard content after paste
+                            if let originalContent = originalClipboardContent {
+                                pasteboard.clearContents()
+                                pasteboard.setString(originalContent, forType: .string)
+                            }
                         }
                     }
                     
@@ -259,7 +326,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     NSUserNotificationCenter.default.deliver(notification)
                     
                     // Restore the original clipboard content
-                    if let originalContent = originalContent {
+                    if let originalContent = originalClipboardContent {
                         pasteboard.clearContents()
                         pasteboard.setString(originalContent, forType: .string)
                     }
@@ -277,6 +344,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func pasteTextAtCursor(_ text: String) {
+        print("Attempting to paste text: '\(text)'")
+        
         // Create event source once and reuse
         guard let source = CGEventSource(stateID: .combinedSessionState) else { return }
         
@@ -288,9 +357,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         pasteGroup.enter()
         
         DispatchQueue.global(qos: .userInteractive).async {
+            print("Setting clipboard content to: '\(textToInsert)'")
+            
             // Atomic clipboard operation
             NSPasteboard.general.prepareForNewContents(with: .currentHostOnly)
             NSPasteboard.general.setString(textToInsert, forType: .string)
+            
+            // Verify clipboard content
+            let clipboardContent = NSPasteboard.general.string(forType: .string)
+            print("Clipboard content before paste: '\(clipboardContent ?? "nil")'")
             
             // Pre-create all events with proper flags
             let cmdDown = CGEvent(keyboardEventSource: source, virtualKey: 0x37, keyDown: true)
@@ -311,9 +386,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 
                 [cmdDown, vDown, vUp, cmdUp].forEach { event in
                     event.post(tap: .cghidEventTap)
-                    usleep(100) // Minimal delay (0.1ms) to maintain event order
+                    usleep(1000) // Slight delay (1ms) to ensure events are processed in order
                 }
             }
+            
+            // Verify paste completed
+            usleep(10000) // Wait 10ms
+            print("Paste operation completed")
             
             pasteGroup.leave()
         }

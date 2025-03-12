@@ -20,6 +20,7 @@
 		8A0F7A382A1B2E9E008A8F83 /* Services/SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0F7A372A1B2E9E008A8F83 /* Services/SettingsManager.swift */; };
 		8A0F7A3A2A1B2E9E008A8F83 /* Services/WhisperService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0F7A392A1B2E9E008A8F83 /* Services/WhisperService.swift */; };
 		8A0F7A3C2A1B2E9E008A8F83 /* Utilities/KeyCodeMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0F7A3B2A1B2E9E008A8F83 /* Utilities/KeyCodeMap.swift */; };
+		ABB16EE02D81D48A004772F3 /* GPTService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABB16EDF2D81D48A004772F3 /* GPTService.swift */; };
 		ABDF40B82D7F6829007F38AE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ABDF40B72D7F6829007F38AE /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -39,6 +40,7 @@
 		8A0F7A392A1B2E9E008A8F83 /* Services/WhisperService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/WhisperService.swift; sourceTree = "<group>"; };
 		8A0F7A3B2A1B2E9E008A8F83 /* Utilities/KeyCodeMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities/KeyCodeMap.swift; sourceTree = "<group>"; };
 		8A0F7A3D2A1B2E9E008A8F83 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		ABB16EDF2D81D48A004772F3 /* GPTService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GPTService.swift; path = Services/GPTService.swift; sourceTree = "<group>"; };
 		ABDF40B02D7F5A67007F38AE /* AnyTalk.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AnyTalk.entitlements; sourceTree = "<group>"; };
 		ABDF40B72D7F6829007F38AE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -84,6 +86,7 @@
 				8A0F7A2F2A1B2E9E008A8F83 /* Models/TranscriptionEntry.swift */,
 				8A0F7A312A1B2E9E008A8F83 /* Services/AudioRecorderService.swift */,
 				8A0F7A332A1B2E9E008A8F83 /* Services/HotKeyService.swift */,
+				ABB16EDF2D81D48A004772F3 /* GPTService.swift */,
 				8A0F7A352A1B2E9E008A8F83 /* Services/HistoryManager.swift */,
 				8A0F7A372A1B2E9E008A8F83 /* Services/SettingsManager.swift */,
 				8A0F7A392A1B2E9E008A8F83 /* Services/WhisperService.swift */,
@@ -170,6 +173,7 @@
 				8A0F7A302A1B2E9E008A8F83 /* Models/TranscriptionEntry.swift in Sources */,
 				8A0F7A322A1B2E9E008A8F83 /* Services/AudioRecorderService.swift in Sources */,
 				8A0F7A342A1B2E9E008A8F83 /* Services/HotKeyService.swift in Sources */,
+				ABB16EE02D81D48A004772F3 /* GPTService.swift in Sources */,
 				8A0F7A362A1B2E9E008A8F83 /* Services/HistoryManager.swift in Sources */,
 				8A0F7A382A1B2E9E008A8F83 /* Services/SettingsManager.swift in Sources */,
 				8A0F7A3A2A1B2E9E008A8F83 /* Services/WhisperService.swift in Sources */,
