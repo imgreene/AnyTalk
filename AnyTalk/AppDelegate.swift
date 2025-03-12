@@ -6,6 +6,7 @@ import Cocoa
 import Carbon
 import ServiceManagement
 import AVFoundation
+import ApplicationServices
 
 // Remove the @_exported import line since GPTService is in the same module
 
@@ -430,4 +431,43 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func quitApp() {
         NSApp.terminate(nil)
     }
-} 
+    
+    func checkAccessibilityPermissions() {
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
+        let accessEnabled = AXIsProcessTrustedWithOptions(options as CFDictionary)
+        
+        if !accessEnabled {
+            // Show alert to guide user
+            let alert = NSAlert()
+            alert.messageText = "Accessibility Access Required"
+            alert.informativeText = "AnyTalk needs accessibility permissions to paste text. Please grant access in System Settings → Privacy & Security → Accessibility."
+            alert.addButton(withTitle: "Open System Settings")
+            alert.addButton(withTitle: "Later")
+            
+            if alert.runModal() == .alertFirstButtonReturn {
+                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+                    NSWorkspace.shared.open(url)
+                }
+            }
+        }
+    }
+    
+    func setupApp() {
+        setupPopover()
+        setupMenuBar()
+        checkAccessibilityPermissions()
+        setupHotKey()
+        
+        // Ensure recording state is synced with settings
+        isRecording = SettingsManager.shared.isRecording
+        updateMenuBarIcon()
+        
+        // Listen for recording state changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(recordingStateChanged),
+            name: Notification.Name("RecordingStateChanged"),
+            object: nil
+        )
+    }
+}

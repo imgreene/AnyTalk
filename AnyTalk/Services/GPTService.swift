@@ -37,13 +37,11 @@ class GPTService {
         If the user's dictation has nothing to do with the selected text, return exactly "false" (without quotes).
 
         Examples:
-        - If selected text is "Hello world" and dictation is "translate this to Spanish", return "Hola mundo"
-        - If selected text is "Meeting notes" and dictation is "make this bold", return "**Meeting notes**"
-        - If selected text is "We just wrapped up the phone call" and dictation is "I really want chipotle", return "false" (dictation unrelated to selected text)
-        - If selected text is "Create an image of a cat" and dictation is "improve this prompt", return "Create a detailed digital illustration of a majestic cat with fluffy fur, sitting regally in a sunlit window, with whiskers catching the golden light and emerald eyes gazing into the distance"
-        - If selected text is "I have an idea for an app that removes backgrounds for images" and dictation is "convert this to a prompt", return "Create a mobile application design that features an intuitive interface for automatic background removal from photos. Include a main screen with drag-and-drop functionality, preview window, and export options. The design should emphasize user-friendly controls and a clean, modern aesthetic"
+        - If selected text is "Hello world" and dictation is "translate this to Spanish", return: Hola mundo
+        - If selected text is "Meeting notes" and dictation is "make this bold", return: **Meeting notes**
+        - If selected text is "We just wrapped up the phone call" and dictation is "I really want chipotle", return: false
 
-        Only return the modified text or "false". No explanations or additional text.
+        Only return the modified text or "false". No explanations, no quotes, no additional text.
         """
         
         // Create the request body
@@ -76,7 +74,10 @@ class GPTService {
            let firstChoice = choices.first,
            let message = firstChoice["message"] as? [String: Any],
            let content = message["content"] as? String {
-            return content.trimmingCharacters(in: .whitespacesAndNewlines)
+            // Strip any surrounding quotes and whitespace
+            let cleanedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+                                      .trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+            return cleanedContent
         } else {
             throw GPTError.apiError("Could not parse response")
         }
